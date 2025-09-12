@@ -11,12 +11,13 @@ interface DashboardTabsProps {
     label: string
     href: string
   }>
+  defaultValue?: string
 }
 
-export function DashboardTabs({ tabs }: DashboardTabsProps) {
+export function DashboardTabs({ tabs, defaultValue }: DashboardTabsProps) {
   const pathname = usePathname()
   
-  const currentTab = tabs.find(tab => pathname.includes(tab.value))?.value || tabs[0]?.value
+  const currentTab = defaultValue || tabs.find(tab => pathname.includes(tab.value))?.value || tabs[0]?.value
 
   return (
     <div className="border-b border-gray-200">
