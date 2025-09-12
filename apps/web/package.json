@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@repo/ui": "*",
+    "@xyflow/react": "^12.8.4",
     "next": "^15.5.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
