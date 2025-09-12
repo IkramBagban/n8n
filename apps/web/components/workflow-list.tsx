@@ -1,8 +1,9 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, MoreHorizontal, Filter } from "lucide-react"
+import { Search, MoreHorizontal, Filter, User, Layers } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
+import Link from "next/link"
 
 interface Workflow {
     id: string
@@ -44,12 +45,14 @@ export function WorkflowList({ workflows, totalCount }: WorkflowListProps) {
         return date.toLocaleDateString()
     }
 
-    const getProjectIcon = (project: Workflow['homeProject']) => {
-        if (project.type === 'personal') {
-            return '👤'
+
+    const getProjectIcon = (project: any) => {
+        if (project?.type === 'personal') {
+            return <User className="w-4 h-4" />;
         }
-        return '📁'
-    }
+        return <Layers className="w-4 h-4" />;
+    };
+
 
     return (
         <div className="p-6">
@@ -79,7 +82,7 @@ export function WorkflowList({ workflows, totalCount }: WorkflowListProps) {
                 {workflows.map((workflow) => (
                     <div key={workflow.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
                         <div className="flex items-center justify-between">
-                            <div className="flex-1">
+                            <Link className="flex-1 cursor-pointer" href={`/workflow/${workflow.id}`}>
                                 <div className="flex items-center gap-3 mb-2">
                                     <h3 className="text-lg font-medium text-gray-900">{workflow.name}</h3>
 
@@ -87,7 +90,7 @@ export function WorkflowList({ workflows, totalCount }: WorkflowListProps) {
                                 <p className="text-sm text-gray-500">
                                     Last updated {formatDate(workflow.updatedAt)} | Created {formatDate(workflow.createdAt)}
                                 </p>
-                            </div>
+                            </Link>
                             <div className="flex items-center gap-2">
                                 <Badge variant="secondary" className="text-xs">
                                     <span className="text-sm text-gray-500">
