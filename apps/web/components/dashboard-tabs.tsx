@@ -16,7 +16,6 @@ interface DashboardTabsProps {
 export function DashboardTabs({ tabs }: DashboardTabsProps) {
   const pathname = usePathname()
   
-  // Extract the current tab from pathname
   const currentTab = tabs.find(tab => pathname.includes(tab.value))?.value || tabs[0]?.value
 
   return (

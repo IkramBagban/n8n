@@ -25,9 +25,11 @@ import {
   HelpCircle, 
   Sparkles,
   ChevronDown,
-  Plus
+  Plus,
+  Layers
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { projects } from "@/app/utils/constants"
 
 const navigationItems = [
   {
@@ -118,17 +120,37 @@ export function AppSidebar() {
         <SidebarGroup>
           <div className="px-3 py-2">
             <h3 className="text-sm font-medium text-gray-500 mb-2">Projects</h3>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="w-full justify-start text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md px-3 py-2"
-              asChild
-            >
-              <Link href="/home/projects/add" className="flex items-center gap-3">
-                <Plus className="w-4 h-4" />
-                Add project
-              </Link>
-            </Button>
+            <div className="space-y-1">
+              {projects.data.map((project) => (
+                <Button 
+                  key={project.id}
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full justify-start text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md px-3 py-2"
+                  asChild
+                >
+                  <Link href={`/home/projects/${project.id}`} className="flex items-center gap-3">
+                    {project.type === 'personal' ? (
+                      <User className="w-4 h-4" />
+                    ) : (
+                      <Layers className="w-4 h-4" />
+                    )}
+                    <span className="truncate">{project.name}</span>
+                  </Link>
+                </Button>
+              ))}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full justify-start text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md px-3 py-2"
+                asChild
+              >
+                <Link href="/home/projects/add" className="flex items-center gap-3">
+                  <Plus className="w-4 h-4" />
+                  Add project
+                </Link>
+              </Button>
+            </div>
           </div>
         </SidebarGroup>
 
@@ -168,7 +190,7 @@ export function AppSidebar() {
             N
           </div>
           <div className="flex-1">
-            <p className="text-sm text-gray-700 font-medium">krish</p>
+            <p className="text-sm text-gray-700 font-medium">ikram</p>
           </div>
           <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600 p-1">
             <ChevronDown className="w-4 h-4" />

@@ -5,7 +5,7 @@ interface WelcomeSectionProps {
   userName?: string
 }
 
-export function WelcomeSection({ userName = "krish" }: WelcomeSectionProps) {
+export function WelcomeSection({ userName = "Ikram" }: WelcomeSectionProps) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-6">
       <div className="text-center mb-8">
