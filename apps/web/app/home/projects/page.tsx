@@ -1,3 +1,4 @@
+'use client' 
 import { ProjectList } from "@/components/project-list"
 import { projects } from "@/app/utils/constants"
 

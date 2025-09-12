@@ -34,7 +34,6 @@ export default function App({ params }: { params: { workflowId: string } }) {
       const id = await params.workflowId;
       setWorkflowId(id);
       
-      // Find the workflow in the static data
       const workflow = workflows.data.find(w => w.id === id);
       setWorkflowData(workflow || null);
       
@@ -105,7 +104,7 @@ export default function App({ params }: { params: { workflowId: string } }) {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link href="/home" className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900">
+                  <Link href={`/projects/${workflowData.homeProject.id}`} className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900">
                     {getProjectIcon(workflowData.homeProject)}
                     {workflowData.homeProject.type === 'personal' ? 'Personal' : workflowData.homeProject.name}
                   </Link>
@@ -179,7 +178,6 @@ export default function App({ params }: { params: { workflowId: string } }) {
         </div>
       </div>
 
-      {/* React Flow Editor */}
       <ReactFlow
         nodes={nodes}
         edges={edges}

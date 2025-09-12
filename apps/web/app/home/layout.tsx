@@ -1,5 +1,3 @@
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardTabs } from "@/components/dashboard-tabs"
 import { MetricsGrid } from "@/components/metrics-grid"
@@ -58,20 +56,17 @@ const metricsData = [
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     return (
-        <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
-                <DashboardHeader
-                    title="Overview"
-                    subtitle="All the workflows, credentials and executions you have access to"
-                />
-                <main className="flex-1 bg-gray-50">
-                    <MetricsGrid metrics={metricsData} />
+        <>
+            <DashboardHeader
+                title="Overview"
+                subtitle="All the workflows, credentials and executions you have access to"
+            />
+            <main className="flex-1 bg-gray-50">
+                <MetricsGrid metrics={metricsData} />
 
-                    <DashboardTabs tabs={dashboardTabs} />
-                    {children}
-                </main>
-            </SidebarInset>
-        </SidebarProvider>
+                <DashboardTabs tabs={dashboardTabs} />
+                {children}
+            </main>
+        </>
     )
 }

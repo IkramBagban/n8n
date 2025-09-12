@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, MoreHorizontal, Plus, Layers } from "lucide-react"
+import Link from "next/link"
 
 interface Project {
     id: string
@@ -61,32 +62,34 @@ export function ProjectList({ projects }: ProjectListProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {projects.map((project) => (
-                    <div key={project.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:bg-gray-50 cursor-pointer">
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg">
-                                    {getProjectIcon(project)}
+                    <Link key={project.id} href={`/projects/${project.id}`}>
+                        <div className="bg-white border border-gray-200 rounded-lg p-6 hover:bg-gray-50 cursor-pointer transition-colors">
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg">
+                                        {getProjectIcon(project)}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-medium text-gray-900">{project.name}</h3>
+                                        <Badge variant="secondary" className="text-xs mt-1">
+                                            {project.type === 'personal' ? 'Personal' : 'Team'}
+                                        </Badge>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="font-medium text-gray-900">{project.name}</h3>
-                                    <Badge variant="secondary" className="text-xs mt-1">
-                                        {project.type === 'personal' ? 'Personal' : 'Team'}
-                                    </Badge>
-                                </div>
+                                <Button variant="ghost" size="sm" onClick={(e) => e.preventDefault()}>
+                                    <MoreHorizontal className="w-4 h-4" />
+                                </Button>
                             </div>
-                            <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                        </div>
 
-                        {project.description && (
-                            <p className="text-sm text-gray-600 mb-4">{project.description}</p>
-                        )}
+                            {project.description && (
+                                <p className="text-sm text-gray-600 mb-4">{project.description}</p>
+                            )}
 
-                        <div className="text-xs text-gray-500">
-                            Created {formatDate(project.createdAt)}
+                            <div className="text-xs text-gray-500">
+                                Created {formatDate(project.createdAt)}
+                            </div>
                         </div>
-                    </div>
+                    </Link>
                 ))}
             </div>
 

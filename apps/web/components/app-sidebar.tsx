@@ -129,7 +129,7 @@ export function AppSidebar() {
                   className="w-full justify-start text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md px-3 py-2"
                   asChild
                 >
-                  <Link href={`/home/projects/${project.id}`} className="flex items-center gap-3">
+                  <Link href={`/projects/${project.id}`} className="flex items-center gap-3">
                     {project.type === 'personal' ? (
                       <User className="w-4 h-4" />
                     ) : (
