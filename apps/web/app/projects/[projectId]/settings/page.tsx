@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { Layers, ChevronDown } from "lucide-react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 interface ProjectSettingsPageProps {
     params: {
@@ -26,7 +26,6 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
         notFound()
     }
 
-    // Project tabs
     const projectTabs = [
         {
             value: "workflows",
@@ -61,7 +60,6 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
                 <div className="max-w-4xl">
                     <div className="p-6 space-y-8">
 
-                        {/* Project icon and name */}
                         <div>
                             <h3 className="text-lg font-medium text-gray-900 mb-4">Project icon and name</h3>
                             <div className="flex items-center gap-4">
@@ -78,7 +76,6 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
                             </div>
                         </div>
 
-                        {/* Project description */}
                         <div>
                             <h3 className="text-lg font-medium text-gray-900 mb-4">Project description</h3>
                             <Textarea
@@ -88,11 +85,9 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
                             />
                         </div>
 
-                        {/* Project members */}
                         <div>
                             <h3 className="text-lg font-medium text-gray-900 mb-4">Project members</h3>
 
-                            {/* Add users dropdown */}
                             <div className="mb-4">
                                 <Select>
                                     <SelectTrigger className="w-full">
@@ -108,13 +103,12 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
                                 </Select>
                             </div>
 
-                            {/* Current members */}
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
                                     <div className="flex items-center gap-3">
                                         <Avatar className="w-10 h-10">
                                             <AvatarFallback className="bg-red-100 text-red-600 font-medium">
-                                                KR
+                                                IK
                                             </AvatarFallback>
                                         </Avatar>
                                         <div>
@@ -129,7 +123,6 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
                             </div>
                         </div>
 
-                        {/* Save/Cancel buttons */}
                         <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
                             <Button variant="outline">
                                 Cancel
@@ -139,7 +132,6 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
                             </Button>
                         </div>
 
-                        {/* Danger zone */}
                         <div className="pt-8 border-t border-gray-200">
                             <h3 className="text-lg font-medium text-gray-900 mb-2">Danger zone</h3>
                             <p className="text-sm text-gray-600 mb-4">
