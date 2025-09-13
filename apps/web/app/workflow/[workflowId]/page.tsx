@@ -1,11 +1,11 @@
 'use client'
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, use } from 'react';
 import { ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
@@ -23,26 +23,27 @@ const initialNodes = [
 ];
 const initialEdges = [{ id: 'n1-n2', source: 'n1', target: 'n2' }];
 
-export default function App({ params }: { params: { workflowId: string } }) {
+export default function App({ params }: { params: Promise<{ workflowId: string }> }) {
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
-  const [workflowData, setWorkflowData] = useState<any>(null);
-  const [workflowId, setWorkflowId] = useState<string>('');
+  const [workflowData, setWorkflowData] = useState(null);
+  const { workflowId } = use(params)
+  // const id = await params.workflowId;
 
+  console.log({ nodes, edges })
   useEffect(() => {
     const getWorkflowData = async () => {
-      const id = await params.workflowId;
-      setWorkflowId(id);
-      
-      const workflow = workflows.data.find(w => w.id === id);
+
+      const workflow = workflows.data.find(w => w.id === workflowId);
       setWorkflowData(workflow || null);
-      
-      console.log("workflowId", id);
+
+      console.log("workflowId", workflowId);
       console.log("workflow data", workflow);
     }
 
     getWorkflowData();
-  }, [params.workflowId]);
+  }, [workflowId]);
+
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
@@ -56,6 +57,17 @@ export default function App({ params }: { params: { workflowId: string } }) {
     (params) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
     [],
   );
+
+  const createNode = useCallback(() => {
+    const label = prompt("Enter node label:");
+    if (!label) return; 
+    const newNode = {
+      id: (nodes.length + 1).toString(),
+      position: { x: 0, y: 0 },
+      data: { label: label || `Node ${nodes.length + 1}` },
+    };
+    setNodes((nodesSnapshot) => [...nodesSnapshot, newNode]);
+  }, [nodes]);
 
   const getProjectIcon = (project: any) => {
     if (project?.type === 'personal') {
@@ -118,7 +130,11 @@ export default function App({ params }: { params: { workflowId: string } }) {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          
+
+          <Button variant="outline" size="sm" onClick={createNode}>
+            + Add Node
+          </Button>
+
           {workflowData.tags && workflowData.tags.length > 0 && (
             <div className="flex gap-2">
               {workflowData.tags.map((tag: string, index: number) => (
@@ -150,8 +166,8 @@ export default function App({ params }: { params: { workflowId: string } }) {
 
           {/* GitHub stars */}
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Link 
-              href="https://github.com/IkramBagban/n8n" 
+            <Link
+              href="https://github.com/IkramBagban/n8n"
               target="_blank"
               className="flex items-center gap-1.5 hover:text-gray-900 transition-colors"
             >
