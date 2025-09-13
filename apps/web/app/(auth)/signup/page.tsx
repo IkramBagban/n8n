@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
+import axios from 'axios'
+import { useRouter } from 'next/navigation'
 
 export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -14,9 +16,22 @@ export default function SignUpPage() {
     confirmPassword: ''
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter()
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
     console.log('Signup:', formData)
+    const response = await axios.post('/api/auth/signup', formData)
+    console.log('Response:', response)
+
+    if (response.status === 201) {
+      router.push('/signin')
+    }
+    else {
+      alert('Signup failed. Please try again.')
+    }
+
   }
 
   return (
