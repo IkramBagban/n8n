@@ -10,7 +10,7 @@ export const POST = async (req: Request) => {
   const schemaResult = createWorkflowSchema.safeParse(body);
 
   if (!schemaResult.success) {
-    return NextResponse.json({ error: schemaResult.error }, { status: 400 });
+    return NextResponse.json({ error: JSON.parse(schemaResult.error.message) }, { status: 400 });
   }
 
   const [project, workflow] = await Promise.all([

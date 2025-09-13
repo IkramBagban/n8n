@@ -10,10 +10,10 @@ export const baseNodeSchema = z.object({
   parameters: z.record(z.any(), z.any()),
   type: z.string(),
   //   typeVersion: z.number(),
-  position: z.tuple([z.number(), z.number()]),
-  id: z.string(),
+  position: z.object({ x: z.number(), y: z.number() }),
+  id: z.string().optional(),
   name: z.string(),
-  data: z.record(z.any(), z.any()),
+  data: z.object().optional(),
 });
 
 export const createWorkflowSchema = z.object({
