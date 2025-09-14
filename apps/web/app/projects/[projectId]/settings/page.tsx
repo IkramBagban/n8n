@@ -1,6 +1,6 @@
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardTabs } from "@/components/dashboard-tabs"
-import { projects } from "@/app/utils/constants"
+import { projects } from "@/utils/constants"
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,7 +21,6 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
 
     const project = projects.data.find(p => p.id === projectId)
 
-    // If project not found, show 404
     if (!project) {
         notFound()
     }

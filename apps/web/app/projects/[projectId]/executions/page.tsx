@@ -1,6 +1,6 @@
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardTabs } from "@/components/dashboard-tabs"
-import { projects } from "@/app/utils/constants"
+import { projects } from "@/utils/constants"
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Search, XCircle, AlertCircle, ChevronDown, MoreHorizontal } from "lucide-react"
@@ -16,12 +16,10 @@ export default async function ProjectExecutionsPage({ params }: ProjectExecution
   
   const project = projects.data.find(p => p.id === projectId)
   
-  // If project not found, show 404
   if (!project) {
     notFound()
   }
   
-  // Project tabs
   const projectTabs = [
     {
       value: "workflows",
@@ -55,7 +53,6 @@ export default async function ProjectExecutionsPage({ params }: ProjectExecution
       <main className="flex-1 p-6">
         <div className="w-full">
           
-          {/* Header with filter and Create Workflow button */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <Button variant="outline" size="sm" className="h-8">
@@ -72,7 +69,6 @@ export default async function ProjectExecutionsPage({ params }: ProjectExecution
             </Button>
           </div>
 
-          {/* Executions Table */}
           <div className="border border-gray-200 rounded-lg overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -120,7 +116,6 @@ export default async function ProjectExecutionsPage({ params }: ProjectExecution
               </tbody>
             </table>
             
-            {/* No more executions message */}
             <div className="text-center py-8 text-gray-500 text-sm border-t border-gray-200">
               No more executions to fetch
             </div>
