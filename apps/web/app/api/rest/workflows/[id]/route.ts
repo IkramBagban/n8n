@@ -1,4 +1,4 @@
-import { createWorkflowSchema } from "@/app/utils/zod-schema";
+import { createWorkflowSchema } from "@/utils/zod-schema";
 import prismaClient from "@repo/db";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -35,6 +35,8 @@ export const GET = async (
   return NextResponse.json({ data: responsePayload }, { status: 200 });
 };
 
+
+
 export const PATCH = async (
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -45,20 +47,7 @@ export const PATCH = async (
     const { id: workflowId } = await params;
 
     console.log("workflowId", workflowId);
-
-    const nodeBody = nodes.map((node) => ({
-      parameters: node.parameters,
-      type: node.type,
-      position: node.position,
-      name: node.name,
-      data: node.data,
-    }));
-
-    const edgeBody = edges.map((edge) => ({
-      id: edge.id,
-      source: edge.source,
-      target: edge.target,
-    }));
+    console.log("data", { body, workflowId });
 
     const schemaResult = createWorkflowSchema.safeParse(body);
     if (!schemaResult.success) {
@@ -73,22 +62,58 @@ export const PATCH = async (
         where: { id: projectId },
         select: { id: true, name: true, description: true, icon: true },
       }),
-      prismaClient.workflow.update({
-        where: { id: "cmfjcdse10001v7jgyqdjavak" },
-        data: {
-          name,
-          active,
-          projectId,
-          Node: {
-            deleteMany: {}, // clear old nodes
-            create: nodeBody, // add new nodes
+      prismaClient.$transaction(async (tx) => {
+        await tx.edge.deleteMany({
+          where: { workflowId },
+        });
+
+        await tx.node.deleteMany({
+          where: { workflowId },
+        });
+
+        const updatedWorkflow = await tx.workflow.update({
+          where: { id: workflowId },
+          data: {
+            name,
+            active,
+            projectId,
           },
-          Edge: {
-            deleteMany: {},
-            create: edgeBody,
-          },
-        },
-        include: { Node: true, Edge: true },
+        });
+
+        const createdNodes = await Promise.all(
+          nodes.map((node: any) =>
+            tx.node.create({
+              data: {
+                id: node.id,
+                name: node.name,
+                type: node.type,
+                parameters: node.parameters || {},
+                position: node.position || [0, 0],
+                data: node.data || {},
+                workflowId,
+              },
+            })
+          )
+        );
+
+        const createdEdges = await Promise.all(
+          edges.map((edge: any) =>
+            tx.edge.create({
+              data: {
+                id: edge.id, 
+                source: edge.source,
+                target: edge.target,
+                workflowId,
+              },
+            })
+          )
+        );
+
+        return {
+          ...updatedWorkflow,
+          Node: createdNodes,
+          Edge: createdEdges,
+        };
       }),
     ]);
 
