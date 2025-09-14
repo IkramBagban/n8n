@@ -1,16 +1,20 @@
 import { createWorkflowSchema } from "@/app/utils/zod-schema";
 import prismaClient from "@repo/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export const POST = async (req: Request) => {
+export const POST = async (req: NextRequest) => {
   const body = await req.json();
-  const { name, nodes, connections, active, tags, projectId } = body;
+
   console.log("body", body);
+  const { name, nodes, edges, active, tags, projectId } = body;
 
   const schemaResult = createWorkflowSchema.safeParse(body);
 
   if (!schemaResult.success) {
-    return NextResponse.json({ error: JSON.parse(schemaResult.error.message) }, { status: 400 });
+    return NextResponse.json(
+      { error: JSON.parse(schemaResult.error.message) },
+      { status: 400 }
+    );
   }
 
   const [project, workflow] = await Promise.all([
@@ -32,27 +36,28 @@ export const POST = async (req: Request) => {
         Node: {
           create: nodes.map((node) => ({ ...node })),
         },
-        Connection: {
-          create: connections.map((conn) => ({ ...conn })),
+        Edge: {
+          create: edges.map((conn) => ({ ...conn })),
         },
       },
       include: {
         Node: true,
-        Connection: true,
+        Edge: true,
       },
     }),
   ]);
 
-  const repsonsePaylaod = {
+  const responsePayload = {
     ...workflow,
     homeProject: project,
     nodes: workflow.Node,
-    connections: workflow.Connection,
+    edges: workflow.Edge,
   };
 
-  delete repsonsePaylaod.Node;
-  delete repsonsePaylaod.Connection;
+  delete responsePayload.Node;
+  delete responsePayload.Edge;
 
-  console.log("responsePayload", repsonsePaylaod);
-  return NextResponse.json({ data: repsonsePaylaod }, { status: 201 });
+  console.log("responsePayload", responsePayload);
+  return NextResponse.json({ data: responsePayload }, { status: 201 });
 };
+

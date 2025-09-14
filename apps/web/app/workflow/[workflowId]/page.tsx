@@ -16,33 +16,52 @@ import {
 import { User, Star, Github, Layers } from 'lucide-react';
 import Link from 'next/link';
 import { workflows } from '@/app/utils/constants';
+import axios from 'axios';
 
-const initialNodes = [
-  { id: 'n1', position: { x: 0, y: 0 }, data: { label: 'Node 1' } },
-  { id: 'n2', position: { x: 0, y: 100 }, data: { label: 'Node 2' } },
-];
-const initialEdges = [{ id: 'n1-n2', source: 'n1', target: 'n2' }];
 
 export default function App({ params }: { params: Promise<{ workflowId: string }> }) {
-  const [nodes, setNodes] = useState(initialNodes);
-  const [edges, setEdges] = useState(initialEdges);
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
   const [workflowData, setWorkflowData] = useState(null);
   const { workflowId } = use(params)
   // const id = await params.workflowId;
 
+
+  console.log("nodes and edges", { nodes, edges });
   console.log({ nodes, edges })
   useEffect(() => {
     const getWorkflowData = async () => {
 
-      const workflow = workflows.data.find(w => w.id === workflowId);
-      setWorkflowData(workflow || null);
+      const response = await axios.get(`/api/rest/workflows/${workflowId}`);
 
       console.log("workflowId", workflowId);
-      console.log("workflow data", workflow);
+      console.log("workflow data", response.data);
+      setNodes(response.data.data.nodes || []);
+      setEdges(response.data.data.edges || []);
+      setWorkflowData(response.data.data || null);
     }
 
     getWorkflowData();
   }, [workflowId]);
+
+  const saveWorkflow = async () => {
+    try {
+      const response = await axios.patch(`/api/rest/workflows/${workflowId}`, {
+        name: workflowData.name,
+        nodes: nodes.map(node => ({ ...node, workflowId: undefined, measured: undefined, selected: undefined, dragging: undefined, searchNode: undefined })),
+        edges,
+        active: workflowData.active,
+        tags: workflowData.tags,
+        projectId: workflowData.projectId,
+      });
+      console.log("Save response", response.data);
+      alert('Workflow saved successfully!');
+    } catch (error) {
+      console.error("Error saving workflow", error);
+      alert('Error saving workflow. Please try again.');
+    }
+  };
+
 
 
   const onNodesChange = useCallback(
@@ -60,11 +79,16 @@ export default function App({ params }: { params: Promise<{ workflowId: string }
 
   const createNode = useCallback(() => {
     const label = prompt("Enter node label:");
-    if (!label) return; 
+    const type = prompt("Enter node type:");
+
+    if (!label) return;
     const newNode = {
       id: (nodes.length + 1).toString(),
+      parameters: {},
       position: { x: 0, y: 0 },
       data: { label: label || `Node ${nodes.length + 1}` },
+      type,
+      name: "have to see this"
     };
     setNodes((nodesSnapshot) => [...nodesSnapshot, newNode]);
   }, [nodes]);
@@ -159,7 +183,7 @@ export default function App({ params }: { params: Promise<{ workflowId: string }
             <Button variant="outline" size="sm">
               Share
             </Button>
-            <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white">
+            <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white" onClick={saveWorkflow}>
               Save
             </Button>
           </div>

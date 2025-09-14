@@ -20,7 +20,13 @@ export const createWorkflowSchema = z.object({
   name: z.string(), // name of workflow
   active: z.boolean(),
   nodes: z.array(baseNodeSchema),
-  connections: z.array(z.any()), // have to create it's schema properly
+  edges: z.array(
+    z.object({
+      id: z.string(),
+      source: z.string(),
+      target: z.string(),
+    })
+  ),
   //   tags: z.array(z.string()), // will think about this later
   //   projectId: z.string(), // we are not creating the workflow under any project then we don't need this. but i think n8n make a project automatically if we don't create workflow in any project.
 });
