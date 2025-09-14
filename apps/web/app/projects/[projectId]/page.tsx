@@ -1,7 +1,7 @@
 import { WorkflowList } from "@/components/workflow-list"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardTabs } from "@/components/dashboard-tabs"
-import { workflows, projects } from "@/app/utils/constants"
+import { workflows, projects } from "@/utils/constants"
 import { notFound } from "next/navigation"
 
 interface ProjectPageProps {

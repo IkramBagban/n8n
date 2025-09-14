@@ -1,6 +1,6 @@
 'use client' 
 import { ProjectList } from "@/components/project-list"
-import { projects } from "@/app/utils/constants"
+import { projects } from "@/utils/constants"
 
 export default function ProjectsPage() {
   return (

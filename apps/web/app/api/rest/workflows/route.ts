@@ -1,4 +1,4 @@
-import { createWorkflowSchema } from "@/app/utils/zod-schema";
+import { createWorkflowSchema } from "@/utils/zod-schema";
 import prismaClient from "@repo/db";
 import { NextRequest, NextResponse } from "next/server";
 

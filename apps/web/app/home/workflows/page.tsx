@@ -1,6 +1,6 @@
 import { WelcomeSection } from "@/components/welcome-section"
 import { WorkflowList } from "@/components/workflow-list"
-import { workflows } from "@/app/utils/constants"
+import { workflows } from "@/utils/constants"
 
 export default function WorkflowsPage() {
 

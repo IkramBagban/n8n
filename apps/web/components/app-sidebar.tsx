@@ -29,7 +29,7 @@ import {
   Layers
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { projects } from "@/app/utils/constants"
+import { projects } from "@/utils/constants"
 
 const navigationItems = [
   {

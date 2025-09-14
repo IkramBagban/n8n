@@ -1,6 +1,6 @@
 import prismaClient from "@repo/db";
 import bcrypt from "bcrypt";
-import { signupSchema } from "@/app/utils/zod-schema";
+import { signupSchema } from "@/utils/zod-schema";
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest) => {
