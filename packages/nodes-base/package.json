@@ -1,5 +1,5 @@
 {
-  "name": "nodes-base",
+  "name": "@repo/nodes-base",
   "module": "index.ts",
   "type": "module",
   "private": true,

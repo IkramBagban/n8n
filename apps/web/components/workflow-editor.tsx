@@ -14,9 +14,14 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { User, Github, Layers } from 'lucide-react';
+import { 
+    User, 
+    Github, 
+    Layers
+} from 'lucide-react';
 import Link from 'next/link';
 import { useWorkflowEditor } from '@/hooks/useWorkflowEditor';
+import { WorkflowSidebar, type NodeItem } from '@/components/workflow-sidebar';
 
 interface WorkflowEditorProps {
     workflowId?: string;
@@ -30,16 +35,48 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         edges,
         workflowData,
         isLoading,
-        error,
+        setNodes,
         onNodesChange,
         onEdgesChange,
         onConnect,
-        createNode,
         saveWorkflow,
         updateWorkflowData,
     } = useWorkflowEditor({ workflowId, projectId, isNewWorkflow });
 
+    console.log("nodes and edges", {nodes, edges})
     const [isSaving, setIsSaving] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [sidebarMode, setSidebarMode] = useState<'triggers' | 'nodes'>('triggers');
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const handleAddNode = () => {
+        // Check if this is the first node - if so, show triggers
+        if (nodes.length === 0) {
+            setSidebarMode('triggers');
+        } else {
+            setSidebarMode('nodes');
+        }
+        setIsSidebarOpen(true);
+    };
+
+    const handleNodeSelect = (nodeItem: NodeItem) => {
+        const newNode = {
+            id: `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            type: 'default',
+            position: { x: Math.random() * 400, y: Math.random() * 400 },
+            name: nodeItem.name,
+            parameters: {},
+            data: { 
+                label: nodeItem.name,
+                nodeType: nodeItem.id,
+                category: nodeItem.category
+            },
+        };
+        
+        // Add the node directly to the nodes state
+        setNodes((currentNodes) => [...currentNodes, newNode]);
+        setIsSidebarOpen(false);
+    };
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -60,7 +97,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         }
     };
 
-    const getProjectIcon = (project: any) => {
+    const getProjectIcon = (project: { type?: string }) => {
         if (project?.type === 'personal') {
             return <User className="w-4 h-4" />;
         }
@@ -92,111 +129,126 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     }
 
     return (
-        <div style={{ width: '100%', height: '100%' }}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
-                <div className="flex items-center gap-4">
-                    {workflowData?.homeProject && (
-                        <Breadcrumb>
-                            <BreadcrumbList>
-                                <BreadcrumbItem>
-                                    <BreadcrumbLink asChild>
-                                        <Link
-                                            href={`/projects/${workflowData.homeProject.id}`}
-                                            className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900"
-                                        >
-                                            {getProjectIcon(workflowData.homeProject)}
-                                            {workflowData.homeProject.type === 'personal'
-                                                ? 'Personal'
-                                                : workflowData.homeProject.name
-                                            }
-                                        </Link>
-                                    </BreadcrumbLink>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator />
-                                <BreadcrumbItem>
-                                    <BreadcrumbPage className="font-medium text-gray-900">
-                                        {workflowData.name}
-                                    </BreadcrumbPage>
-                                </BreadcrumbItem>
-                            </BreadcrumbList>
-                        </Breadcrumb>
-                    )}
+        <div className="flex h-full">
 
-                    <Button variant="outline" size="sm" onClick={createNode}>
-                        + Add Node
-                    </Button>
+            <div className="flex-1 flex flex-col" style={{ width: '100%', height: '100%' }}>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
+                    <div className="flex items-center gap-4">
+                        {workflowData?.homeProject && (
+                            <Breadcrumb>
+                                <BreadcrumbList>
+                                    <BreadcrumbItem>
+                                        <BreadcrumbLink asChild>
+                                            <Link
+                                                href={`/projects/${workflowData.homeProject.id}`}
+                                                className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900"
+                                            >
+                                                {getProjectIcon(workflowData.homeProject)}
+                                                {workflowData.homeProject.type === 'personal'
+                                                    ? 'Personal'
+                                                    : workflowData.homeProject.name
+                                                }
+                                            </Link>
+                                        </BreadcrumbLink>
+                                    </BreadcrumbItem>
+                                    <BreadcrumbSeparator />
+                                    <BreadcrumbItem>
+                                        <BreadcrumbPage className="font-medium text-gray-900">
+                                            {workflowData.name}
+                                        </BreadcrumbPage>
+                                    </BreadcrumbItem>
+                                </BreadcrumbList>
+                            </Breadcrumb>
+                        )}
 
-                    {workflowData?.tags && workflowData.tags.length > 0 && (
-                        <div className="flex gap-2">
-                            {workflowData.tags.map((tag: string, index: number) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
-                                    {tag}
-                                </Badge>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                        <Button variant="outline" size="sm" onClick={handleAddNode}>
+                            + Add Node
+                        </Button>
 
-                <div className="flex items-center gap-4">
-                    {workflowData && (
+                        {workflowData?.tags && workflowData.tags.length > 0 && (
+                            <div className="flex gap-2">
+                                {workflowData.tags.map((tag: string, index: number) => (
+                                    <Badge key={index} variant="secondary" className="text-xs">
+                                        {tag}
+                                    </Badge>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        {workflowData && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600">
+                                    {workflowData.active ? 'Active' : 'Inactive'}
+                                </span>
+                                <Switch
+                                    checked={workflowData.active}
+                                    onCheckedChange={handleToggleActive}
+                                />
+                            </div>
+                        )}
+
                         <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-600">
-                                {workflowData.active ? 'Active' : 'Inactive'}
-                            </span>
-                            <Switch
-                                checked={workflowData.active}
-                                onCheckedChange={handleToggleActive}
-                            />
+                            <Button variant="outline" size="sm">
+                                Share
+                            </Button>
+                            <Button
+                                size="sm"
+                                className="bg-red-500 hover:bg-red-600 text-white"
+                                onClick={handleSave}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? 'Saving...' : 'Save'}
+                            </Button>
                         </div>
-                    )}
 
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm">
-                            Share
-                        </Button>
-                        <Button
-                            size="sm"
-                            className="bg-red-500 hover:bg-red-600 text-white"
-                            onClick={handleSave}
-                            disabled={isSaving}
-                        >
-                            {isSaving ? 'Saving...' : 'Save'}
-                        </Button>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Link
+                                href="https://github.com/IkramBagban/n8n"
+                                target="_blank"
+                                className="flex items-center gap-1.5 hover:text-gray-900 transition-colors"
+                            >
+                                <Github className="w-4 h-4" />
+                            </Link>
+                        </div>
                     </div>
+                </div>
 
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Link
-                            href="https://github.com/IkramBagban/n8n"
-                            target="_blank"
-                            className="flex items-center gap-1.5 hover:text-gray-900 transition-colors"
-                        >
-                            <Github className="w-4 h-4" />
-                        </Link>
+                <div className="border-b border-gray-200 bg-white">
+                    <div className="flex items-center px-6">
+                        <button className="px-4 py-3 text-sm font-medium text-gray-900 border-b-2 border-gray-900">
+                            Editor
+                        </button>
+                        <button className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                            Executions
+                        </button>
+                        <button className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                            Evaluations
+                        </button>
                     </div>
+                </div>
+
+                <div className="flex-1">
+                    <ReactFlow
+                        nodes={nodes}
+                        edges={edges}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        onConnect={onConnect}
+                        fitView
+                    />
                 </div>
             </div>
 
-            <div className="border-b border-gray-200 bg-white">
-                <div className="flex items-center px-6">
-                    <button className="px-4 py-3 text-sm font-medium text-gray-900 border-b-2 border-gray-900">
-                        Editor
-                    </button>
-                    <button className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
-                        Executions
-                    </button>
-                    <button className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
-                        Evaluations
-                    </button>
-                </div>
-            </div>
-
-            <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                fitView
+            <WorkflowSidebar
+                isOpen={isSidebarOpen}
+                mode={sidebarMode}
+                searchQuery={searchQuery}
+                onClose={() => setIsSidebarOpen(false)}
+                onSearchChange={setSearchQuery}
+                onNodeSelect={handleNodeSelect}
+                onModeChange={setSidebarMode}
             />
         </div>
     );

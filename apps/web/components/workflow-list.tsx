@@ -77,7 +77,6 @@ export function WorkflowList({ workflows, totalCount }: WorkflowListProps) {
                 </div>
             </div>
 
-            {/* Workflow List */}
             <div className="space-y-4">
                 {workflows.map((workflow) => (
                     <div key={workflow.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
