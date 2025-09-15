@@ -1,0 +1,28 @@
+"use client"
+
+import { Handle, Position } from "@xyflow/react";
+import { Send } from "lucide-react";
+
+interface ActionNodeData {
+    label: string;
+    [key: string]: unknown;
+}
+
+interface ActionNodeProps {
+    data: ActionNodeData;
+}
+
+export function ActionNode({ data }: ActionNodeProps) {
+    console.log("ActionNode :", data);
+
+    return (
+        <div className="action-node relative flex justify-center items-center border border-gray-300 rounded-lg bg-white shadow-sm w-10 h-10">
+            <Send className="w-5 h-5 text-blue-600" />
+            <div className="absolute -bottom-3 left-0 h-3 rounded-full border border-white text-[.5rem] w-[10rem] border border-gray-300">
+                {data?.label[0]?.toUpperCase() + data?.label.slice(1)}
+            </div>
+            <Handle type="target" position={Position.Left} />
+            <Handle type="source" position={Position.Right} />
+        </div>
+    );
+}
