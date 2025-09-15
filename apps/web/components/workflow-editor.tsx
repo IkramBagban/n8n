@@ -50,7 +50,6 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     const [searchQuery, setSearchQuery] = useState('');
 
     const handleAddNode = () => {
-        // Check if this is the first node - if so, show triggers
         if (nodes.length === 0) {
             setSidebarMode('triggers');
         } else {
@@ -69,11 +68,10 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
             data: { 
                 label: nodeItem.name,
                 nodeType: nodeItem.id,
-                category: nodeItem.category
+                category: nodeItem.category || nodeItem.group[0]
             },
         };
         
-        // Add the node directly to the nodes state
         setNodes((currentNodes) => [...currentNodes, newNode]);
         setIsSidebarOpen(false);
     };

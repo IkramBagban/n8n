@@ -21,6 +21,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@repo/db": "*",
     "@repo/ui": "*",
+    "@repo/nodes-base": "*",
     "@tailwindcss/postcss": "^4.1.13",
     "@xyflow/react": "^12.8.4",
     "axios": "^1.12.1",

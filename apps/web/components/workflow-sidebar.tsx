@@ -14,6 +14,7 @@ import {
     ChevronRight,
     Plus
 } from 'lucide-react';
+import axios from 'axios';
 
 interface NodeCategory {
     id: string;
@@ -29,6 +30,7 @@ interface NodeItem {
     description: string;
     icon: React.ReactNode;
     type: 'trigger' | 'action';
+    group?: string[];
     category: string;
 }
 
@@ -51,48 +53,67 @@ export function WorkflowSidebar({
     onNodeSelect,
     onModeChange,
 }: WorkflowSidebarProps) {
-    const triggerNodes: NodeItem[] = [
-        {
-            id: 'manual-trigger',
-            name: 'Trigger manually',
-            description: 'Runs the flow on clicking a button in n8n',
-            icon: <Zap className="w-5 h-5" />,
-            type: 'trigger',
-            category: 'triggers'
-        },
-        {
-            id: 'schedule-trigger',
-            name: 'On a schedule',
-            description: 'Runs the flow every day, hour, or custom interval',
-            icon: <Clock className="w-5 h-5" />,
-            type: 'trigger',
-            category: 'triggers'
-        },
-        {
-            id: 'webhook-trigger',
-            name: 'On webhook call',
-            description: 'Runs the flow on receiving an HTTP request',
-            icon: <Globe className="w-5 h-5" />,
-            type: 'trigger',
-            category: 'triggers'
-        },
-        {
-            id: 'form-trigger',
-            name: 'On form submission',
-            description: 'Generate webforms in n8n and pass their responses to the workflow',
-            icon: <FileText className="w-5 h-5" />,
-            type: 'trigger',
-            category: 'triggers'
-        },
-        {
-            id: 'chat-trigger',
-            name: 'On chat message',
-            description: 'Runs the flow when a user sends a chat message',
-            icon: <MessageSquare className="w-5 h-5" />,
-            type: 'trigger',
-            category: 'triggers'
-        }
-    ];
+
+
+    const [availableTriggerNodes, setAvailableTriggerNodes] = React.useState<NodeItem[]>([]);
+    console.log("availableTriggerNodes:", availableTriggerNodes);
+    React.useEffect(() => {
+
+        const getTriggerNodes = async () => {
+            try {
+                const response = await axios.get('/api/rest/available-triggers');
+                console.log("available triggers:", response.data);
+                setAvailableTriggerNodes(response.data);
+            } catch (error) {
+                console.log('Error fetching trigger nodes:', error);
+            }
+        };
+
+        getTriggerNodes();
+    }, []);
+
+    // const triggerNodes: NodeItem[] = [
+    //     {
+    //         id: 'manual-trigger',
+    //         name: 'Trigger manually',
+    //         description: 'Runs the flow on clicking a button in n8n',
+    //         icon: <Zap className="w-5 h-5" />,
+    //         type: 'trigger',
+    //         category: 'triggers'
+    //     },
+    //     {
+    //         id: 'schedule-trigger',
+    //         name: 'On a schedule',
+    //         description: 'Runs the flow every day, hour, or custom interval',
+    //         icon: <Clock className="w-5 h-5" />,
+    //         type: 'trigger',
+    //         category: 'triggers'
+    //     },
+    //     {
+    //         id: 'webhook-trigger',
+    //         name: 'On webhook call',
+    //         description: 'Runs the flow on receiving an HTTP request',
+    //         icon: <Globe className="w-5 h-5" />,
+    //         type: 'trigger',
+    //         category: 'triggers'
+    //     },
+    //     {
+    //         id: 'form-trigger',
+    //         name: 'On form submission',
+    //         description: 'Generate webforms in n8n and pass their responses to the workflow',
+    //         icon: <FileText className="w-5 h-5" />,
+    //         type: 'trigger',
+    //         category: 'triggers'
+    //     },
+    //     {
+    //         id: 'chat-trigger',
+    //         name: 'On chat message',
+    //         description: 'Runs the flow when a user sends a chat message',
+    //         icon: <MessageSquare className="w-5 h-5" />,
+    //         type: 'trigger',
+    //         category: 'triggers'
+    //     }
+    // ];
 
     const nodeCategories: NodeCategory[] = [
         {
@@ -145,7 +166,7 @@ export function WorkflowSidebar({
         }
     ];
 
-    const filteredTriggers = triggerNodes.filter(node =>
+    const filteredTriggers = availableTriggerNodes.filter(node =>
         node.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         node.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -208,7 +229,8 @@ export function WorkflowSidebar({
                                     onClick={() => onNodeSelect(trigger)}
                                 >
                                     <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                        {trigger.icon}
+                                        {/* {trigger.icon} */}
+                                        <Zap className="w-5 h-5" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-medium text-gray-900 text-sm">{trigger.name}</h3>
