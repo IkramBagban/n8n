@@ -49,7 +49,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     console.log("nodes and edges", { nodes, edges })
     const [isSaving, setIsSaving] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [sidebarMode, setSidebarMode] = useState<'triggers' | 'nodes'>('triggers');
+    const [sidebarMode, setSidebarMode] = useState<'triggers' | 'actions'>('triggers');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [isNodeModalOpen, setIsNodeModalOpen] = useState(false);
@@ -76,25 +76,26 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         if (nodes.length === 0) {
             setSidebarMode('triggers');
         } else {
-            setSidebarMode('nodes');
+            setSidebarMode('actions');
         }
         setIsSidebarOpen(true);
     };
 
     const handleNodeSelect = (nodeItem: NodeItem) => {
         console.log("Selected node item:", nodeItem);
+        const nodeType = nodeItem.group?.includes('trigger') || nodeItem.category === 'triggers' || sidebarMode === 'triggers' ? 'trigger' : 'action';
+
         const newNode = {
             id: `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            // type: 'default',
-            position: { x: Math.random() * 400, y: Math.random() * 400 },
+            position: { x: 0, y: 0 },
             name: nodeItem.name,
             description: nodeItem.description,
-            type: "trigger",
+            type: nodeType,
             parameters: {},
             data: {
-                label: nodeItem.displayName,
+                label: nodeItem.displayName || nodeItem.name,
                 nodeType: nodeItem.id,
-                category: nodeItem.category || nodeItem.group[0],   
+                category: nodeItem.category || nodeItem.group?.[0] || 'default',
                 properties: nodeItem.properties
             },
         };
@@ -155,7 +156,6 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
     return (
         <div className="flex h-full">
-            {/*     <NodeDataOverlay data={{ label: 'Sample Node', nodeType: 'trigger', category: 'AI' }} /> */}
 
             <div className="flex-1 flex flex-col" style={{ width: '100%', height: '100%' }}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
