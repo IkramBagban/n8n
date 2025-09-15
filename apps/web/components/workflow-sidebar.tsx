@@ -21,13 +21,15 @@ interface NodeCategory {
     name: string;
     description: string;
     icon: React.ReactNode;
-    items: NodeItem[];
+    items?: NodeItem[];
 }
 
 interface NodeItem {
     id: string;
     name: string;
     description: string;
+    displayName: string;
+    properties: Record<string, any>; // #todo: need to update with proper types
     icon: React.ReactNode;
     type: 'trigger' | 'action';
     group?: string[];
@@ -115,69 +117,53 @@ export function WorkflowSidebar({
     //     }
     // ];
 
-    const nodeCategories: NodeCategory[] = [
-        {
-            id: 'ai',
-            name: 'AI',
-            description: 'Build autonomous agents, summarize or search documents, etc.',
-            icon: <Zap className="w-5 h-5" />,
-            items: [
-                {
-                    id: 'openai',
-                    name: 'OpenAI',
-                    description: 'Use OpenAI GPT models',
-                    icon: <Code className="w-4 h-4" />,
-                    type: 'action',
-                    category: 'ai'
-                }
-            ]
-        },
-        {
-            id: 'app-action',
-            name: 'Action in an app',
-            description: 'Do something in an app or service like Google Sheets, Telegram or Notion',
-            icon: <Globe className="w-5 h-5" />,
-            items: [
-                {
-                    id: 'google-sheets',
-                    name: 'Google Sheets',
-                    description: 'Read and write to Google Sheets',
-                    icon: <FileText className="w-4 h-4" />,
-                    type: 'action',
-                    category: 'app-action'
-                }
-            ]
-        },
-        {
-            id: 'data-transformation',
-            name: 'Data transformation',
-            description: 'Manipulate, filter or convert data',
-            icon: <Database className="w-5 h-5" />,
-            items: [
-                {
-                    id: 'code',
-                    name: 'Code',
-                    description: 'Run custom JavaScript code',
-                    icon: <Code className="w-4 h-4" />,
-                    type: 'action',
-                    category: 'data-transformation'
-                }
-            ]
-        }
-    ];
+    // const nodeCategories: NodeCategory[] = [
+    //     {
+    //         id: 'telegram',
+    //         name: 'Telegram',
+    //         description: 'Interact with Telegram API',
+    //         icon: <Zap className="w-5 h-5" />,
+    //         items: [
+    //             {
+    //                 id: 'openai',
+    //                 name: 'OpenAI',
+    //                 description: 'Use OpenAI GPT models',
+    //                 icon: <Code className="w-4 h-4" />,
+    //                 type: 'action',
+    //                 category: 'ai'
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         id: 'email',
+    //         name: 'Email',
+    //         description: 'Sends an email using SMTP protocol',
+    //         icon: <Globe className="w-5 h-5" />,
+    //         items: [
+    //             {
+    //                 id: 'google-sheets',
+    //                 name: 'Google Sheets',
+    //                 description: 'Read and write to Google Sheets',
+    //                 icon: <FileText className="w-4 h-4" />,
+    //                 type: 'action',
+    //                 category: 'app-action'
+    //             }
+    //         ]
+    //     },
+    // ];
 
     const filteredTriggers = availableTriggerNodes.filter(node =>
         node.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         node.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const filteredCategories = nodeCategories.map(category => ({
-        ...category,
-        items: category.items.filter(item =>
-            item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.description.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-    })).filter(category => category.items.length > 0);
+    // const filteredCategories = nodeCategories.map(category => ({
+    //     ...category,
+    //     items: category.items?.filter(item =>
+    //         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    //         item.description.toLowerCase().includes(searchQuery.toLowerCase())
+    //     )
+    // }))?.filter(category => category.items?.length > 0);
 
     if (!isOpen) {
         return null;
@@ -217,7 +203,7 @@ export function WorkflowSidebar({
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
-                    {mode === 'triggers' ? (
+                    {/* {mode === 'triggers' ? ( */}
                         <div className="p-4 space-y-3">
                             <p className="text-sm text-gray-600 mb-4">
                                 A trigger is a step that starts your workflow
@@ -257,8 +243,13 @@ export function WorkflowSidebar({
                                 </div>
                             </div>
                         </div>
-                    ) : (
+                    {/* ) : (
                         <div className="p-4 space-y-4">
+                            <div>
+                                <p className="text-sm text-gray-600 mb-4">
+                                    An action is a step that does something in your workflow
+                                </p>
+                            </div>
                             {filteredCategories.map((category) => (
                                 <div key={category.id} className="space-y-3">
                                     <div className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 cursor-pointer transition-colors">
@@ -274,7 +265,7 @@ export function WorkflowSidebar({
                                 </div>
                             ))}
                         </div>
-                    )}
+                    )} */}
                 </div>
             </div>
         </>

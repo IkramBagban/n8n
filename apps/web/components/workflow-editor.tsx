@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react';
-import { ReactFlow } from '@xyflow/react';
+import { Background, Controls, MiniMap, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -14,14 +14,17 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { 
-    User, 
-    Github, 
+import {
+    User,
+    Github,
     Layers
 } from 'lucide-react';
 import Link from 'next/link';
 import { useWorkflowEditor } from '@/hooks/useWorkflowEditor';
 import { WorkflowSidebar, type NodeItem } from '@/components/workflow-sidebar';
+import { NodeConfigModal } from '@/components/node-config-modal';
+import { nodeTypes } from '@/utils/nodes-types';
+import { Node } from '@/lib/types';
 
 interface WorkflowEditorProps {
     workflowId?: string;
@@ -43,11 +46,31 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         updateWorkflowData,
     } = useWorkflowEditor({ workflowId, projectId, isNewWorkflow });
 
-    console.log("nodes and edges", {nodes, edges})
+    console.log("nodes and edges", { nodes, edges })
     const [isSaving, setIsSaving] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [sidebarMode, setSidebarMode] = useState<'triggers' | 'nodes'>('triggers');
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+    const [isNodeModalOpen, setIsNodeModalOpen] = useState(false);
+
+    const handleNodeDoubleClick = (event: React.MouseEvent, node: Node) => {
+        setSelectedNode(node);
+        setIsNodeModalOpen(true);
+    };
+
+    const handleNodeModalClose = () => {
+        setIsNodeModalOpen(false);
+        setSelectedNode(null);
+    };
+
+    const handleNodeSave = (updatedNode: Node) => {
+        setNodes((currentNodes) =>
+            currentNodes.map((node) =>
+                node.id === updatedNode.id ? updatedNode : node
+            )
+        );
+    };
 
     const handleAddNode = () => {
         if (nodes.length === 0) {
@@ -59,19 +82,23 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     };
 
     const handleNodeSelect = (nodeItem: NodeItem) => {
+        console.log("Selected node item:", nodeItem);
         const newNode = {
             id: `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            type: 'default',
+            // type: 'default',
             position: { x: Math.random() * 400, y: Math.random() * 400 },
             name: nodeItem.name,
+            description: nodeItem.description,
+            type: "trigger",
             parameters: {},
-            data: { 
-                label: nodeItem.name,
+            data: {
+                label: nodeItem.displayName,
                 nodeType: nodeItem.id,
-                category: nodeItem.category || nodeItem.group[0]
+                category: nodeItem.category || nodeItem.group[0],   
+                properties: nodeItem.properties
             },
         };
-        
+
         setNodes((currentNodes) => [...currentNodes, newNode]);
         setIsSidebarOpen(false);
     };
@@ -128,6 +155,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
     return (
         <div className="flex h-full">
+            {/*     <NodeDataOverlay data={{ label: 'Sample Node', nodeType: 'trigger', category: 'AI' }} /> */}
 
             <div className="flex-1 flex flex-col" style={{ width: '100%', height: '100%' }}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
@@ -229,13 +257,19 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
                 <div className="flex-1">
                     <ReactFlow
+                        onNodeDoubleClick={handleNodeDoubleClick}
                         nodes={nodes}
                         edges={edges}
+                        nodeTypes={nodeTypes}
                         onNodesChange={onNodesChange}
                         onEdgesChange={onEdgesChange}
                         onConnect={onConnect}
                         fitView
-                    />
+                    >
+                        <Background />
+                        <Controls />
+                        <MiniMap />
+                    </ReactFlow>
                 </div>
             </div>
 
@@ -247,6 +281,13 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 onSearchChange={setSearchQuery}
                 onNodeSelect={handleNodeSelect}
                 onModeChange={setSidebarMode}
+            />
+
+            <NodeConfigModal
+                node={selectedNode}
+                isOpen={isNodeModalOpen}
+                onClose={handleNodeModalClose}
+                onSave={handleNodeSave}
             />
         </div>
     );
