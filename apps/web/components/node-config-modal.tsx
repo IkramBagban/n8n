@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X, ExternalLink, Play, Settings, BookOpen } from 'lucide-react'
 import {
     Dialog,
@@ -24,11 +24,11 @@ interface NodeConfigModalProps {
 }
 
 export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigModalProps) {
-    const [nodeData, setNodeData] = useState<Node | null>(node || null)
+    const [nodeData, setNodeData] = useState<Node | null>(node)
     const [activeTab, setActiveTab] = useState('parameters')
 
 
-    console.log("nodeData", nodeData)
+    console.log("nodeData", { nodeData, node })
     const handleParameterChange = (key: string, value: string | number | boolean) => {
         if (!nodeData) return
 
@@ -44,7 +44,47 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigMod
         })
     }
 
+    useEffect(() => {
+        setNodeData(node)
+    }, [node])
+
     if (!node) return null
+
+    const renderProperty = (property) => {
+        console.log("property", property)
+        if (!property) return null
+        switch (property?.type) {
+            case 'string':
+                return <Input
+                    placeholder={property.placeholder || ''}
+                    // value={nodeData?.data?.label || ''}
+                    // onChange={(e) => handleParameterChange('label', e.target.value)}
+                    className="mt-1"
+                />
+            case 'number':
+                return <Input
+                    type="number"
+                    // value={nodeData?.data?.label || ''}
+                    // onChange={(e) => handleParameterChange('label', e.target.value)}
+                    className="mt-1"
+                />
+            case "options":
+                return <Select defaultValue={property.default || ''}>
+                    <SelectTrigger>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {
+                            property.options?.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.name}
+                                </SelectItem>
+                            ))
+                        }
+                    </SelectContent>
+                </Select>
+        }
+    }
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -159,58 +199,17 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigMod
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-gray-700">HTTP Method</label>
-                                            <Select defaultValue="GET">
-                                                <SelectTrigger>
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="GET">GET</SelectItem>
-                                                    <SelectItem value="POST">POST</SelectItem>
-                                                    <SelectItem value="PUT">PUT</SelectItem>
-                                                    <SelectItem value="DELETE">DELETE</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            {
+                                                Object.keys(nodeData?.data.properties || {}).map((key) => {
+                                                    const property = nodeData?.data.properties[key]
+                                                    return <div key={key}>
+                                                        <label htmlFor={key}>{property.displayName}</label>
+                                                        {renderProperty(property)}
+                                                    </div>
+                                                })
+                                            }
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-gray-700">Path</label>
-                                            <Input defaultValue="5bc3758f-2f29-4dfe-a307-6aeb849a86e4" />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-gray-700">Authentication</label>
-                                            <Select defaultValue="none">
-                                                <SelectTrigger>
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="none">None</SelectItem>
-                                                    <SelectItem value="basic">Basic Auth</SelectItem>
-                                                    <SelectItem value="bearer">Bearer Token</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-gray-700">Respond</label>
-                                            <Select defaultValue="immediately">
-                                                <SelectTrigger>
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="immediately">Immediately</SelectItem>
-                                                    <SelectItem value="when-last-node">When Last Node Finishes</SelectItem>
-                                                    <SelectItem value="using-respond">Using Respond to Webhook Node</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-
-                                            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mt-2">
-                                                <p className="text-sm text-yellow-800">
-                                                    If you are sending back a response, add a &quot;Content-Type&quot; response header with the appropriate value to avoid unexpected behavior
-                                                </p>
-                                            </div>
-                                        </div>
 
                                         <div className="space-y-3">
                                             <h4 className="font-medium text-gray-900">Options</h4>

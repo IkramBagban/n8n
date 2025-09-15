@@ -1,4 +1,5 @@
 import { ManualTrigger } from "../nodes/ManualTrigger/ManualTrigger.node";
+import { Telegram } from "../nodes/Telegram/Telegram.node";
 import { Webhook } from "../nodes/Webhook/Webhook.node";
 
 export const predefinedNodesTypes = {
@@ -10,5 +11,8 @@ export const predefinedNodesTypes = {
     type: new Webhook(),
     sourcePath: "",
   },
+  "nodes-base.telegram": {
+    type: new Telegram(),
+    sourcePath: "",
+  },
 };
-

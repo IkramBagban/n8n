@@ -52,15 +52,16 @@ model Workflow {
 }
 
 model Node {
-  id         String   @id @default(uuid())
-  name       String
-  type       String
-  parameters Json // have to think if need it or not. 
-  position   Json // [x,y]
-  data       Json // any other data will be come here. 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  workflowId String
+  id          String   @id @default(uuid())
+  name        String
+  type        String
+  description String?
+  parameters  Json // have to think if need it or not. 
+  position    Json // [x,y]
+  data        Json // any other data will be come here. 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  workflowId  String
 
   workflow Workflow @relation(fields: [workflowId], references: [id])
 

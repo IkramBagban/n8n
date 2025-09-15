@@ -61,19 +61,20 @@ export class Webhook {
     },
     supportsCORS: true,
     properties: [
-      {
-        displayName: "Allow Multiple HTTP Methods",
-        name: "multipleMethods",
-        type: "boolean",
-        default: false,
-        isNodeSetting: true,
-        description:
-          "Whether to allow the webhook to listen for multiple HTTP methods",
-      },
+      // {
+      //   displayName: "Allow Multiple HTTP Methods",
+      //   name: "multipleMethods",
+      //   type: "boolean",
+      //   default: false,
+      //   isNodeSetting: true,
+      //   description:
+      //     "Whether to allow the webhook to listen for multiple HTTP methods",
+      // },
       {
         displayName: "HTTP Methods",
         name: "httpMethod",
-        type: "multiOptions",
+        // type: "multiOptions",
+        type: "options",
         options: [
           {
             name: "DELETE",
@@ -100,7 +101,8 @@ export class Webhook {
             value: "PUT",
           },
         ],
-        default: ["GET", "POST"],
+        // default: ["GET", "POST"],
+        default: "GET",
         description: "The HTTP methods to listen to",
       },
       {
