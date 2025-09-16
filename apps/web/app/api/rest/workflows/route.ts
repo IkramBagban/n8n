@@ -61,3 +61,31 @@ export const POST = async (req: NextRequest) => {
   return NextResponse.json({ data: responsePayload }, { status: 201 });
 };
 
+export const GET = async (req: NextRequest) => {
+  const { searchParams } = new URL(req.url);
+  const projectId = searchParams.get("projectId");
+
+  if (projectId) {
+    const projects = await prismaClient.project.findFirst({
+      where: { id: projectId },
+      include: { workflows: true },
+    });
+
+    return NextResponse.json({ data: projects });
+  }
+
+  const workflows = await prismaClient.workflow.findMany({
+    include: {
+      project: {
+        select: {
+          id: true,
+          type: true,
+          name: true,
+          icon: true,
+        },
+      },
+    },
+  });
+
+  return NextResponse.json({ data: workflows });
+};

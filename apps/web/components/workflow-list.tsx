@@ -4,28 +4,9 @@ import { Input } from "@/components/ui/input"
 import { Search, MoreHorizontal, Filter, User, Layers } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import Link from "next/link"
+import { WorkflowListProps } from "@/lib/types"
 
-interface Workflow {
-    id: string
-    name: string
-    active: boolean
-    createdAt: string
-    updatedAt: string
-    homeProject: {
-        id: string
-        type: string
-        name: string
-        icon?: {
-            type: string
-            value: string
-        } | null
-    }
-}
 
-interface WorkflowListProps {
-    workflows: Workflow[]
-    totalCount: number
-}
 
 export function WorkflowList({ workflows, totalCount }: WorkflowListProps) {
     const formatDate = (dateString: string) => {
@@ -93,9 +74,9 @@ export function WorkflowList({ workflows, totalCount }: WorkflowListProps) {
                             <div className="flex items-center gap-2">
                                 <Badge variant="secondary" className="text-xs">
                                     <span className="text-sm text-gray-500">
-                                        {getProjectIcon(workflow.homeProject)}
+                                        {getProjectIcon(workflow.project)}
                                     </span>
-                                    {workflow.homeProject.type === 'personal' ? 'Personal' : workflow.homeProject.name}
+                                    {workflow.project.type === 'personal' ? 'Personal' : workflow.project.name}
                                 </Badge>
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-500">Inactive</span>

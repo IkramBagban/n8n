@@ -1,9 +1,9 @@
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardTabs } from "@/components/dashboard-tabs"
-import { projects } from "@/utils/constants"
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Search, XCircle, AlertCircle, ChevronDown, MoreHorizontal } from "lucide-react"
+import { projectInstance } from "@/actions/projects"
 
 interface ProjectExecutionsPageProps {
   params: {
@@ -13,13 +13,13 @@ interface ProjectExecutionsPageProps {
 
 export default async function ProjectExecutionsPage({ params }: ProjectExecutionsPageProps) {
   const { projectId } = await params
-  
-  const project = projects.data.find(p => p.id === projectId)
-  
+
+  const project = await projectInstance.getProjectById(projectId)
+
   if (!project) {
     notFound()
   }
-  
+
   const projectTabs = [
     {
       value: "workflows",
@@ -27,7 +27,7 @@ export default async function ProjectExecutionsPage({ params }: ProjectExecution
       href: `/projects/${projectId}`
     },
     {
-      value: "credentials", 
+      value: "credentials",
       label: "Credentials",
       href: `/projects/${projectId}/credentials`
     },
@@ -38,21 +38,21 @@ export default async function ProjectExecutionsPage({ params }: ProjectExecution
     },
     {
       value: "project-settings",
-      label: "Project settings", 
+      label: "Project settings",
       href: `/projects/${projectId}/settings`
     }
   ]
 
   return (
     <div className="flex flex-col min-h-full bg-gray-50">
-      <DashboardHeader 
+      <DashboardHeader
         title={project.name}
         subtitle={project.description || "this is my project description"}
       />
       <DashboardTabs tabs={projectTabs} defaultValue="executions" />
       <main className="flex-1 p-6">
         <div className="w-full">
-          
+
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <Button variant="outline" size="sm" className="h-8">

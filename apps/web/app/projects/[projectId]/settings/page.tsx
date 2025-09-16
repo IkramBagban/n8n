@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { Layers, ChevronDown } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { projectInstance } from "@/actions/projects"
 
 interface ProjectSettingsPageProps {
     params: {
@@ -19,7 +20,7 @@ interface ProjectSettingsPageProps {
 export default async function ProjectSettingsPage({ params }: ProjectSettingsPageProps) {
     const { projectId } = await params
 
-    const project = projects.data.find(p => p.id === projectId)
+    const project = await projectInstance.getProjectById(projectId)
 
     if (!project) {
         notFound()
@@ -52,7 +53,7 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
         <div className="flex flex-col min-h-full bg-gray-50">
             <DashboardHeader
                 title={project.name}
-                subtitle={project.description || "this is my project description"}
+                subtitle={project.description}
             />
             <DashboardTabs tabs={projectTabs} defaultValue="project-settings" />
             <main className="flex-1 p-6">

@@ -1,11 +1,10 @@
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardTabs } from "@/components/dashboard-tabs"
-import { projects } from "@/utils/constants"
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Search, Plus, Key, Eye, MoreHorizontal } from "lucide-react"
+import { Search, Plus, Key } from "lucide-react"
+import { projectInstance } from "@/actions/projects"
 
 interface ProjectCredentialsPageProps {
     params: {
@@ -16,7 +15,8 @@ interface ProjectCredentialsPageProps {
 export default async function ProjectCredentialsPage({ params }: ProjectCredentialsPageProps) {
     const { projectId } = await params
 
-    const project = projects.data.find(p => p.id === projectId)
+    const project = await projectInstance.getProjectById(projectId)
+
 
     // If project not found, show 404
     if (!project) {

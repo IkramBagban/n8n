@@ -13,7 +13,7 @@ export const workflows = {
       versionId: "ac1f9892-7300-4875-8a19-59d26ba0ab59",
       parentFolder: null,
       tags: [],
-      homeProject: {
+      project: {
         id: "yHTa3rjcSa7Cka0t",
         type: "team",
         name: "fProject",
@@ -44,7 +44,7 @@ export const workflows = {
       versionId: "7462456e-95bc-4e5d-bbae-bd8b9ad0ec19",
       parentFolder: null,
       tags: [],
-      homeProject: {
+      project: {
         id: "LngNuUUiAQyyqOuL",
         type: "personal",
         name: "ikram   <ikrambagban.dev@gmail.com>",

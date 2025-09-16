@@ -1,8 +1,9 @@
+import { getWorkflows } from "@/actions/workflows";
 import { WelcomeSection } from "@/components/welcome-section"
 import { WorkflowList } from "@/components/workflow-list"
-import { workflows } from "@/utils/constants"
 
-export default function WorkflowsPage() {
+export default async function WorkflowsPage() {
+    const workflows = await getWorkflows();
 
     if (workflows.data.length > 0) {
         return (

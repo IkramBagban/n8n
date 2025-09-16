@@ -6,3 +6,25 @@ export type Node = {
   data: Record<string, any>;
   name: string;
 };
+
+export interface Workflow {
+  id: string;
+  name: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  project: {
+    id: string;
+    type: string;
+    name: string;
+    icon?: {
+      type: string;
+      value: string;
+    } | null;
+  };
+}
+
+export interface WorkflowListProps {
+  workflows: Workflow[];
+  totalCount: number;
+}

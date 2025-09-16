@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
   Sidebar,
@@ -15,21 +15,21 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { 
-  Home, 
-  User, 
-  Settings, 
-  FileText, 
-  Variable, 
-  BarChart3, 
-  HelpCircle, 
+import {
+  Home,
+  User,
+  Settings,
+  FileText,
+  Variable,
+  BarChart3,
+  HelpCircle,
   Sparkles,
   ChevronDown,
   Plus,
   Layers
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { projects } from "@/utils/constants"
+import axios from "axios"
 
 const navigationItems = [
   {
@@ -80,6 +80,50 @@ const adminItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const [projects, setProjects] = React.useState(null);
+  const [isCreatingProject, setIsCreatingProject] = React.useState(false);
+
+  React.useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await axios.get('/api/rest/projects');
+        console.log("fetched projects", response.data)
+        setProjects(response.data?.data);
+      }
+      catch (error) {
+        console.error('Error fetching projects:', error);
+      }
+    }
+
+    fetchProjects();
+  }, [])
+
+  const handleAddProject = async () => {
+    setIsCreatingProject(true);
+    try {
+      const response = await axios.post('/api/rest/projects', {
+        name: "My project",
+        icon: {
+          type: "icon",
+          value: "layers"
+        }
+      });
+
+      const newProject = response.data.data;
+      console.log("Created project:", newProject);
+
+      setProjects((prevProjects: any[] | null) => [...(prevProjects || []), newProject]);
+
+      router.push(`/projects/${newProject.id}`);
+    } catch (error) {
+      console.error('Error creating project:', error);
+      alert('Failed to create project. Please try again.');
+    } finally {
+      setIsCreatingProject(false);
+    }
+  };
 
   return (
     <Sidebar variant="sidebar" className="bg-white border-r border-gray-200">
@@ -91,15 +135,15 @@ export function AppSidebar() {
           <span className="font-semibold text-gray-900">n8n</span>
         </div>
       </SidebarHeader>
-      
+
       <SidebarContent className="px-2 py-4">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton 
-                    asChild 
+                  <SidebarMenuButton
+                    asChild
                     isActive={pathname === item.href}
                     className={cn(
                       "w-full justify-start text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md px-3 py-2",
@@ -121,11 +165,11 @@ export function AppSidebar() {
           <div className="px-3 py-2">
             <h3 className="text-sm font-medium text-gray-500 mb-2">Projects</h3>
             <div className="space-y-1">
-              {projects.data.map((project) => (
-                <Button 
+              {projects?.map((project) => (
+                <Button
                   key={project.id}
-                  variant="ghost" 
-                  size="sm" 
+                  variant="ghost"
+                  size="sm"
                   className="w-full justify-start text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md px-3 py-2"
                   asChild
                 >
@@ -139,16 +183,15 @@ export function AppSidebar() {
                   </Link>
                 </Button>
               ))}
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="w-full justify-start text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md px-3 py-2"
-                asChild
+                onClick={handleAddProject}
+                disabled={isCreatingProject}
               >
-                <Link href="/home/projects/add" className="flex items-center gap-3">
-                  <Plus className="w-4 h-4" />
-                  Add project
-                </Link>
+                <Plus className="w-4 h-4" />
+                {isCreatingProject ? "Creating..." : "Add project"}
               </Button>
             </div>
           </div>
@@ -159,8 +202,8 @@ export function AppSidebar() {
             <SidebarMenu className="space-y-1">
               {adminItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton 
-                    asChild 
+                  <SidebarMenuButton
+                    asChild
                     isActive={pathname === item.href}
                     className={cn(
                       "w-full justify-start text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md px-3 py-2",
