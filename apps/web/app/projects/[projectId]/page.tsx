@@ -3,6 +3,7 @@ import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardTabs } from "@/components/dashboard-tabs"
 import { notFound } from "next/navigation"
 import { getWorkflowsOfProject } from "@/actions/workflows"
+import { projectInstance } from "@/actions/projects"
 
 interface ProjectPageProps {
   params: {
@@ -12,14 +13,15 @@ interface ProjectPageProps {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { projectId } = await params
+  console.log("projectId", projectId)
   if (!projectId) {
     alert("projectId is not provided")
     notFound()
   }
 
+  const project = await projectInstance.getProjectById(projectId)
   const { data } = await getWorkflowsOfProject(projectId)
 
-  const project = data[0].project
   const projectWorkflows = data
 
   if (!project) {

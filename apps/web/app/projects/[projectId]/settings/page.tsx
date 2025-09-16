@@ -1,15 +1,13 @@
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardTabs } from "@/components/dashboard-tabs"
-import { projects } from "@/utils/constants"
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
-import { Layers, ChevronDown } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { projectInstance } from "@/actions/projects"
+import { ProjectSettingsForm } from "@/components/project-settings-form"
 
 interface ProjectSettingsPageProps {
     params: {
@@ -60,30 +58,7 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
                 <div className="max-w-4xl">
                     <div className="p-6 space-y-8">
 
-                        <div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">Project icon and name</h3>
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg border border-gray-200">
-                                    <Layers className="w-6 h-6 text-gray-600" />
-                                </div>
-                                <div className="flex-1">
-                                    <Input
-                                        defaultValue={project.name}
-                                        className="max-w-md"
-                                        placeholder="Project name"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">Project description</h3>
-                            <Textarea
-                                defaultValue={project.description || "this is my project description"}
-                                className="min-h-[100px] resize-none"
-                                placeholder="Enter project description..."
-                            />
-                        </div>
+                        <ProjectSettingsForm project={project} />
 
                         <div>
                             <h3 className="text-lg font-medium text-gray-900 mb-4">Project members</h3>
