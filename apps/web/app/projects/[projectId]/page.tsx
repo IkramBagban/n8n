@@ -1,8 +1,8 @@
 import { WorkflowList } from "@/components/workflow-list"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardTabs } from "@/components/dashboard-tabs"
-import { workflows, projects } from "@/utils/constants"
 import { notFound } from "next/navigation"
+import { getWorkflowsOfProject } from "@/actions/workflows"
 
 interface ProjectPageProps {
   params: {
@@ -12,18 +12,21 @@ interface ProjectPageProps {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { projectId } = await params
-  
-  const project = projects.data.find(p => p.id === projectId)
-  
-  // If project not found, show 404
+  if (!projectId) {
+    alert("projectId is not provided")
+    notFound()
+  }
+
+  const { data } = await getWorkflowsOfProject(projectId)
+
+  const project = data[0].project
+  const projectWorkflows = data
+
   if (!project) {
     notFound()
   }
-  
-  // Filter workflows that belong to this project
-  const projectWorkflows = workflows.data.filter(w => w.homeProject.id === projectId)
-  
-  // Project tabs
+
+
   const projectTabs = [
     {
       value: "workflows",
@@ -31,7 +34,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       href: `/projects/${projectId}`
     },
     {
-      value: "credentials", 
+      value: "credentials",
       label: "Credentials",
       href: `/projects/${projectId}/credentials`
     },
@@ -42,23 +45,23 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     },
     {
       value: "project-settings",
-      label: "Project settings", 
+      label: "Project settings",
       href: `/projects/${projectId}/settings`
     }
   ]
 
   return (
     <div className="flex flex-col min-h-full bg-gray-50">
-      <DashboardHeader 
+      <DashboardHeader
         title={project.name}
-        subtitle={project.description || "this is my project description"}
+        subtitle={project.description}
       />
       <DashboardTabs tabs={projectTabs} />
       <main className="flex-1">
-        {projectWorkflows.length > 0 ? (
-          <WorkflowList 
-            workflows={projectWorkflows} 
-            totalCount={projectWorkflows.length} 
+        {projectWorkflows?.length > 0 ? (
+          <WorkflowList
+            workflows={projectWorkflows}
+            totalCount={projectWorkflows.length}
           />
         ) : (
           <div className="p-6">
