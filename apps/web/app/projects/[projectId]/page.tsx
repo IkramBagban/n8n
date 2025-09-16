@@ -13,7 +13,7 @@ interface ProjectPageProps {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { projectId } = await params
-  console.log("projectId", projectId)
+
   if (!projectId) {
     alert("projectId is not provided")
     notFound()

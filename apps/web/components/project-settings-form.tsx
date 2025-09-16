@@ -36,8 +36,6 @@ export function ProjectSettingsForm({ project }: ProjectSettingsFormProps) {
                 icon: project.icon,
             })
 
-            console.log("Project updated:", response.data)
-
             alert("Project updated successfully!")
 
             router.refresh()

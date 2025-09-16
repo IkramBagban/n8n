@@ -52,13 +52,11 @@ export function WorkflowSidebar({
 
 
     const [availableTriggerNodes, setAvailableTriggerNodes] = React.useState<NodeItem[]>([]);
-    console.log("availableTriggerNodes:", availableTriggerNodes);
 
     React.useEffect(() => {
         const getTriggerNodes = async () => {
             try {
                 const response = await axios.get('/api/rest/available-triggers');
-                console.log("available triggers:", response.data);
                 setAvailableTriggerNodes(response.data);
             } catch (error) {
                 console.log('Error fetching trigger nodes:', error);

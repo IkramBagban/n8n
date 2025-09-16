@@ -51,7 +51,6 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigMod
     if (!node) return null
 
     const renderProperty = (property) => {
-        console.log("property", property)
         if (!property) return null
         switch (property?.type) {
             case 'string':

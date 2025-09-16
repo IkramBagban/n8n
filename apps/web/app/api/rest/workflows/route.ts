@@ -5,7 +5,6 @@ import { NextRequest, NextResponse } from "next/server";
 export const POST = async (req: NextRequest) => {
   const body = await req.json();
 
-  console.log("body", body);
   const { name, nodes, edges, active, tags, projectId } = body;
 
   const schemaResult = createWorkflowSchema.safeParse(body);
@@ -57,7 +56,6 @@ export const POST = async (req: NextRequest) => {
   delete responsePayload.Node;
   delete responsePayload.Edge;
 
-  console.log("responsePayload", responsePayload);
   return NextResponse.json({ data: responsePayload }, { status: 201 });
 };
 

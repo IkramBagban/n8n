@@ -34,7 +34,7 @@ import axios from "axios"
 const navigationItems = [
   {
     title: "Overview",
-    href: "/home",
+    href: "/home/workflows",
     icon: Home,
   },
   {
@@ -89,7 +89,6 @@ export function AppSidebar() {
     const fetchProjects = async () => {
       try {
         const response = await axios.get('/api/rest/projects');
-        console.log("fetched projects", response.data)
         setProjects(response.data?.data);
       }
       catch (error) {
