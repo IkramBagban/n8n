@@ -35,8 +35,6 @@ export const GET = async (
   return NextResponse.json({ data: responsePayload }, { status: 200 });
 };
 
-
-
 export const PATCH = async (
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -57,65 +55,65 @@ export const PATCH = async (
       );
     }
 
-    const [project, workflow] = await Promise.all([
-      prismaClient.project.findFirst({
-        where: { id: projectId },
-        select: { id: true, name: true, description: true, icon: true },
-      }),
-      prismaClient.$transaction(async (tx) => {
-        await tx.edge.deleteMany({
-          where: { workflowId },
-        });
+    const project = await prismaClient.project.findFirst({
+      where: { id: projectId },
+      select: { id: true, name: true, description: true, icon: true },
+    });
+    // const [project, workflow] = await Promise.all([
+    const workflow = await prismaClient.$transaction(async (tx) => {
+      await tx.edge.deleteMany({
+        where: { workflowId },
+      });
 
-        await tx.node.deleteMany({
-          where: { workflowId },
-        });
+      await tx.node.deleteMany({
+        where: { workflowId },
+      });
 
-        const updatedWorkflow = await tx.workflow.update({
-          where: { id: workflowId },
-          data: {
-            name,
-            active,
-            projectId,
-          },
-        });
+      const updatedWorkflow = await tx.workflow.update({
+        where: { id: workflowId },
+        data: {
+          name,
+          active,
+          projectId,
+        },
+      });
 
-        const createdNodes = await Promise.all(
-          nodes.map((node: any) =>
-            tx.node.create({
-              data: {
-                id: node.id,
-                name: node.name,
-                type: node.type,
-                parameters: node.parameters || {},
-                position: node.position || [0, 0],
-                data: node.data || {},
-                workflowId,
-              },
-            })
-          )
-        );
+      const createdNodes = await Promise.all(
+        nodes.map((node: any) =>
+          tx.node.create({
+            data: {
+              id: node.id,
+              name: node.name,
+              type: node.type,
+              parameters: node.parameters || {},
+              position: node.position || [0, 0],
+              data: node.data || {},
+              workflowId,
+            },
+          })
+        )
+      );
 
-        const createdEdges = await Promise.all(
-          edges.map((edge: any) =>
-            tx.edge.create({
-              data: {
-                id: edge.id, 
-                source: edge.source,
-                target: edge.target,
-                workflowId,
-              },
-            })
-          )
-        );
+      const createdEdges = await Promise.all(
+        edges.map((edge: any) =>
+          tx.edge.create({
+            data: {
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+              workflowId,
+            },
+          })
+        )
+      );
 
-        return {
-          ...updatedWorkflow,
-          Node: createdNodes,
-          Edge: createdEdges,
-        };
-      }),
-    ]);
+      return {
+        ...updatedWorkflow,
+        Node: createdNodes,
+        Edge: createdEdges,
+      };
+    });
+    // ]);
 
     const responsePayload = {
       ...workflow,
