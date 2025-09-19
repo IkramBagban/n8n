@@ -25,6 +25,7 @@ import { WorkflowSidebar, type NodeItem } from '@/components/workflow-sidebar';
 import { NodeConfigModal } from '@/components/node-config-modal';
 import { nodeTypes } from '@/utils/nodes-types';
 import { Node } from '@/lib/types';
+import axios from 'axios';
 
 interface WorkflowEditorProps {
     workflowId?: string;
@@ -116,6 +117,17 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
             setIsSaving(false);
         }
     };
+
+    const handleExecuteWorkflow = async () => {
+        const payload = { workflowId, nodes, edges }
+        console.log("payload", payload);
+
+        const response = await axios.post("/api/rest/workflows/execute", payload)
+        console.log("response", response)
+
+
+
+    }
 
     const handleToggleActive = () => {
         if (workflowData) {
@@ -271,6 +283,9 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                         <MiniMap />
                     </ReactFlow>
                 </div>
+            </div>
+            <div className='absolute bottom-10 left-30 w-[70%] flex justify-center items-center'>
+                <Button className='bg-red-500 hover:bg-red-600 cursor-pointer' onClick={handleExecuteWorkflow}>Execute Workflow</Button>
             </div>
 
             <WorkflowSidebar
