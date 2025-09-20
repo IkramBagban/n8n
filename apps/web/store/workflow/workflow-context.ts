@@ -1,0 +1,32 @@
+import { Edge, Node } from "@/lib/types";
+import { createContext, Dispatch, SetStateAction, useContext } from "react";
+
+type Workflow = {
+  workflowId: string;
+  nodes: Node[];
+  edges: Edge[];
+};
+
+type WorkflowContextType = {
+  addWorkflow: (workflow: Workflow) => void;
+  addNode: Dispatch<SetStateAction<Node>>;
+  getSelectedNode: () => Node | null;
+  removeNode: (nodeId: string) => void;
+  workflow: Workflow;
+  selectedNodeId: string;
+  setSelectedNodeId: Dispatch<SetStateAction<string>>;
+  nodeParameterChangeHandler: (key: string, value: any) => void;
+};
+
+export const WorkflowContext = createContext<WorkflowContextType>({
+  addWorkflow: (workflow: Workflow) => {},
+  addNode: () => {},
+  getSelectedNode: () => null,
+  removeNode: () => {},
+  selectedNodeId: null,
+  setSelectedNodeId: () => {},
+  workflow: { workflowId: "", nodes: [], edges: [] },
+  nodeParameterChangeHandler: (key, value) => {},
+});
+
+export const useWorkflowCtx = () => useContext(WorkflowContext);

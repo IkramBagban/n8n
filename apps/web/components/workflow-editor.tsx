@@ -26,6 +26,7 @@ import { NodeConfigModal } from '@/components/node-config-modal';
 import { nodeTypes } from '@/utils/nodes-types';
 import { Node } from '@/lib/types';
 import axios from 'axios';
+import { useWorkflowCtx } from '@/store/workflow/workflow-context';
 
 interface WorkflowEditorProps {
     workflowId?: string;
@@ -47,7 +48,6 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         updateWorkflowData,
     } = useWorkflowEditor({ workflowId, projectId, isNewWorkflow });
 
-    console.log("nodes and edges", { nodes, edges })
     const [isSaving, setIsSaving] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [sidebarMode, setSidebarMode] = useState<'triggers' | 'actions'>('triggers');
@@ -55,13 +55,18 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [isNodeModalOpen, setIsNodeModalOpen] = useState(false);
 
+    const workflowCtx = useWorkflowCtx()
+
+
     const handleNodeDoubleClick = (event: React.MouseEvent, node: Node) => {
         setSelectedNode(node);
+        workflowCtx.setSelectedNodeId(node.id)
         setIsNodeModalOpen(true);
     };
 
     const handleNodeModalClose = () => {
         setIsNodeModalOpen(false);
+        workflowCtx.setSelectedNodeId(null)
         setSelectedNode(null);
     };
 
@@ -86,8 +91,9 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         console.log("Selected node item:", nodeItem);
         const nodeType = nodeItem.group?.includes('trigger') || nodeItem.category === 'triggers' || sidebarMode === 'triggers' ? 'trigger' : 'action';
 
+        const nodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         const newNode = {
-            id: `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: nodeId,
             position: { x: 0, y: 0 },
             name: nodeItem.name,
             description: nodeItem.description,
@@ -100,6 +106,8 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 properties: nodeItem.properties
             },
         };
+
+        workflowCtx.addNode(newNode)
 
         setNodes((currentNodes) => [...currentNodes, newNode]);
         setIsSidebarOpen(false);
@@ -124,9 +132,6 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
         const response = await axios.post("/api/rest/workflows/execute", payload)
         console.log("response", response)
-
-
-
     }
 
     const handleToggleActive = () => {

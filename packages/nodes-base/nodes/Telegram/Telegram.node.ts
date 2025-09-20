@@ -143,8 +143,30 @@ export class Telegram implements INodeType {
         // },
         required: true,
         description:
-          "Unique identifier for the target chat or username, To find your chat ID ask @get_id_bot",
+          "Unique identifier for the target chat or username, To find your chat ID ask @getinfobot",
+      },
+      {
+        displayName: "Text",
+        name: "text",
+        type: "string",
+        default: "",
+        required: true,
       },
     ],
   };
+
+  async execute({
+    parameters,
+    accessToken = "7802384127:AAGLoVv-rmVT54gepxa-2rjfr4YAzCi5HB0",
+  }: any) {
+    if (!parameters) {
+      return console.error("parameters are not provided");
+    }
+
+    const url = `https://api.telegram.org/bot${accessToken}/sendMessage?chat_id=${parameters?.chatId}&text=${parameters.text}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    console.log(JSON.stringify(data, null, 2));
+    return data;
+  }
 }

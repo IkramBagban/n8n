@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Node } from "@/lib/types"
+import { useWorkflowCtx } from '@/store/workflow/workflow-context'
 
 interface NodeConfigModalProps {
     node: Node | null
@@ -27,11 +28,10 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigMod
     const [nodeData, setNodeData] = useState<Node | null>(node)
     const [activeTab, setActiveTab] = useState('parameters')
 
-
-    console.log("nodeData", { nodeData, node })
+    const workflowCtx = useWorkflowCtx();
     const handleParameterChange = (key: string, value: string | number | boolean) => {
         if (!nodeData) return
-
+        workflowCtx.nodeParameterChangeHandler(key, value);
         setNodeData((prev: Node | null) => {
             if (!prev) return prev
             return {
@@ -44,96 +44,157 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigMod
         })
     }
 
+    const handleDataChange = (key: string, value: string | number | boolean) => {
+        if (!nodeData) return
+
+        setNodeData((prev: Node | null) => {
+            if (!prev) return prev
+            return {
+                ...prev,
+                data: {
+                    ...prev.data,
+                    [key]: value
+                }
+            }
+        })
+    }
+
     useEffect(() => {
         setNodeData(node)
     }, [node])
 
     if (!node) return null
 
-    const renderProperty = (property) => {
+    const renderProperty = (property, propertyKey) => {
         if (!property) return null
+
+        const currentValue = workflowCtx.getSelectedNode()?.parameters[property?.name] || property.default || ''
+
         switch (property?.type) {
+            case 'callout':
+                return (
+                    <div className="p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800">
+                        {property.displayName}
+                    </div>
+
+                )
             case 'string':
-                return <Input
-                    placeholder={property.placeholder || ''}
-                    // value={nodeData?.data?.label || ''}
-                    // onChange={(e) => handleParameterChange('label', e.target.value)}
-                    className="mt-1"
-                />
+                return (
+                    <Input
+                        placeholder={property.placeholder || ''}
+                        value={currentValue}
+                        onChange={(e) => handleParameterChange(property.name, e.target.value)}
+                        className="mt-2"
+                    />
+                )
             case 'number':
-                return <Input
-                    type="number"
-                    // value={nodeData?.data?.label || ''}
-                    // onChange={(e) => handleParameterChange('label', e.target.value)}
-                    className="mt-1"
-                />
+                return (
+                    <Input
+                        type="number"
+                        value={currentValue}
+                        onChange={(e) => handleParameterChange(property.name, Number(e.target.value))}
+                        className="mt-2"
+                    />
+                )
             case "options":
-                return <Select defaultValue={property.default || ''}>
-                    <SelectTrigger>
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {
-                            property.options?.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.name}
-                                </SelectItem>
-                            ))
-                        }
-                    </SelectContent>
-                </Select>
+                return (
+                    <Select value={currentValue} onValueChange={(value) => handleParameterChange(property.name, value)}>
+                        <SelectTrigger className="mt-2">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {
+                                property.options?.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.name}
+                                    </SelectItem>
+                                ))
+                            }
+                        </SelectContent>
+                    </Select>
+                )
+            case 'boolean':
+                return (
+                    <Select value={currentValue.toString()} onValueChange={(value) => handleParameterChange(property.name, value === 'true')}>
+                        <SelectTrigger className="mt-2">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="true">True</SelectItem>
+                            <SelectItem value="false">False</SelectItem>
+                        </SelectContent>
+                    </Select>
+                )
+            case 'textarea':
+                return (
+                    <Textarea
+                        placeholder={property.placeholder || ''}
+                        value={currentValue}
+                        onChange={(e) => handleParameterChange(property.name, e.target.value)}
+                        className="mt-2"
+                        rows={property.rows || 3}
+                    />
+                )
+            default:
+                return (
+                    <Input
+                        placeholder={property.placeholder || ''}
+                        value={currentValue}
+                        onChange={(e) => handleParameterChange(property.name, e.target.value)}
+                        className="mt-2"
+                    />
+                )
         }
     }
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent
-                className="!max-w-none !w-[90vw] !h-[90vh] p-0 overflow-hidden"
-                style={{
-                    width: '90vw',
-                    height: '90vh',
-                    maxWidth: 'none',
-                    maxHeight: '90vh'
-                }}
+                className="!max-w-none !w-[50vw] !h-[95vh] p-0 overflow-hidden"
                 showCloseButton={false}
             >
-                <DialogHeader className="flex flex-row items-center justify-between p-4 border-b">
+                {/* Header */}
+                <DialogHeader className="flex flex-row items-center justify-between p-6 border-b bg-white">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                            <span className="text-red-600 text-sm font-medium">🪝</span>
+                        <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                            <span className="text-red-600 text-lg">🪝</span>
                         </div>
                         <div>
-                            <DialogTitle className="text-lg font-semibold">
+                            <DialogTitle className="text-xl font-semibold">
                                 {nodeData?.data?.label || nodeData?.name || 'Node Configuration'}
                             </DialogTitle>
                             <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
-                                    Listen for test event
+                                    Webhook Node
                                 </Badge>
                             </div>
                         </div>
                     </div>
-                    <button
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={onClose}
-                        className="p-1 hover:bg-gray-100 rounded-md"
+                        className="h-8 w-8 p-0"
                     >
-                        <X className="w-5 h-5" />
-                    </button>
+                        <X className="w-4 h-4" />
+                    </Button>
                 </DialogHeader>
 
-                <div className="flex flex-1 h-full" style={{ height: 'calc(90vh - 80px)' }}>
-                    <div className="w-1/2 border-r flex flex-col" style={{ minWidth: '400px' }}>
-                        <div className="p-4 bg-gray-50 border-b">
-                            <h3 className="font-medium text-gray-900 mb-2">
-                                Pull in events from {nodeData?.data?.label || 'Webhook'}
+                {/* Main Content */}
+                <div className="flex flex-1 h-full">
+                    {/* Left Panel - Test Section */}
+                    {/* <div className="w-2/5 border-r flex flex-col bg-gray-50">
+                        <div className="p-6 border-b bg-white">
+                            <h3 className="font-semibold text-gray-900 mb-3">
+                                Test Webhook
                             </h3>
-                            <Button variant="outline" size="sm" className="bg-red-500 text-white hover:bg-red-600">
+                            <Button className="bg-red-500 hover:bg-red-600 text-white w-full mb-4">
                                 <Play className="w-4 h-4 mr-2" />
                                 Listen for test event
                             </Button>
-                            <p className="text-sm text-gray-600 mt-3">
-                                Once you&apos;ve finished building your workflow, run it without having to click this button by using the production webhook URL.{' '}
-                                <span className="text-blue-600 cursor-pointer">More info</span>
+                            <p className="text-sm text-gray-600">
+                                Click the button above to start listening for webhook events.
+                                Once you receive a test event, you'll see the data here.
                             </p>
                         </div>
 
@@ -149,11 +210,12 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigMod
                                 <p className="text-sm">Logs</p>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
 
-                    <div className="w-1/2 flex flex-col" style={{ minWidth: '500px' }}>
+                    {/* Right Panel - Configuration */}
+                    <div className="flex-1 flex flex-col">
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-                            <TabsList className="grid w-full grid-cols-2 m-4 mb-0">
+                            <TabsList className="grid w-full grid-cols-3 mx-6 mt-6 mb-0">
                                 <TabsTrigger value="parameters" className="flex items-center gap-2">
                                     <Settings className="w-4 h-4" />
                                     Parameters
@@ -161,136 +223,155 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigMod
                                 <TabsTrigger value="settings">Settings</TabsTrigger>
                             </TabsList>
 
-                            <div className="flex-1 overflow-auto min-h-[400px] max-h-[500px]">
-                                <TabsContent value="parameters" className="p-4 pt-2">
-                                    <div className="space-y-6">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <span className="text-red-500">▼</span>
-                                                <h4 className="font-medium text-gray-900">Webhook URLs</h4>
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                <div className="flex gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className={activeTab === 'test' ? 'bg-gray-100' : ''}
-                                                    >
-                                                        Test URL
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className={activeTab === 'production' ? 'bg-gray-100' : ''}
-                                                    >
-                                                        Production URL
-                                                    </Button>
-                                                </div>
-
-                                                <div className="flex items-center gap-2 p-2 bg-gray-50 rounded border">
-                                                    <Badge variant="secondary" className="bg-gray-600 text-white">GET</Badge>
-                                                    <code className="text-sm text-gray-700 flex-1">
-                                                        https://krisht231.app.n8n.cloud/webhook-test/5bc3758f-2f29-4dfe-a307-6aeb849a86e4
-                                                    </code>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            {
-                                                Object.keys(nodeData?.data.properties || {}).map((key) => {
-                                                    const property = nodeData?.data.properties[key]
-                                                    return <div key={key}>
-                                                        <label htmlFor={key}>{property.displayName}</label>
-                                                        {renderProperty(property)}
+                            {/* Scrollable Content Area */}
+                            <div className="flex-1 overflow-hidden">
+                                <TabsContent value="parameters" className="h-full">
+                                    <div className="h-full overflow-y-auto px-6 py-4">
+                                        <div className="space-y-6">
+                                            {/* Dynamic Properties */}
+                                            {Object.keys(nodeData?.data?.properties || {}).length > 0 && (
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-900 mb-4">Configuration</h4>
+                                                    <div className="space-y-4">
+                                                        {Object.keys(nodeData?.data.properties || {}).map((key) => {
+                                                            // console.log("Key", { key, props: nodeData?.data.properties })
+                                                            const property = nodeData?.data.properties[key]
+                                                            return (
+                                                                <div key={key} className="space-y-2">
+                                                                    <label className="text-sm font-medium text-gray-700 block">
+                                                                        {property.displayName}
+                                                                        {property.required && <span className="text-red-500 ml-1">*</span>}
+                                                                    </label>
+                                                                    {renderProperty(property, key)}
+                                                                    {property.description && (
+                                                                        <p className="text-xs text-gray-500">{property.description}</p>
+                                                                    )}
+                                                                </div>
+                                                            )
+                                                        })}
                                                     </div>
-                                                })
-                                            }
+                                                </div>
+                                            )}
+
+                                            {/* Additional Options */}
+                                            <div>
+                                                <h4 className="font-semibold text-gray-900 mb-4">Additional Options</h4>
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="text-sm font-medium text-gray-700 block mb-2">
+                                                            Response Mode
+                                                        </label>
+                                                        <Select defaultValue="responseCode">
+                                                            <SelectTrigger>
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="responseCode">Response Code</SelectItem>
+                                                                <SelectItem value="responseData">Response Data</SelectItem>
+                                                                <SelectItem value="noResponse">No Response</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
+                                    </div>
+                                </TabsContent>
 
-
-                                        <div className="space-y-3">
-                                            <h4 className="font-medium text-gray-900">Options</h4>
-                                            <div className="text-sm text-gray-600">
-                                                No properties
+                                <TabsContent value="settings" className="h-full">
+                                    <div className="h-full overflow-y-auto px-6 py-4">
+                                        <div className="space-y-6">
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-700 block mb-2">Node Name</label>
+                                                <Input
+                                                    value={nodeData?.data?.label || nodeData?.name || ''}
+                                                    onChange={(e) => handleDataChange('label', e.target.value)}
+                                                    placeholder="Enter node name"
+                                                />
                                             </div>
 
-                                            <Select>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Add option" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="raw-body">Raw Body</SelectItem>
-                                                    <SelectItem value="response-headers">Response Headers</SelectItem>
-                                                    <SelectItem value="response-data">Response Data</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-700 block mb-2">Notes</label>
+                                                <Textarea
+                                                    value={nodeData?.data?.notes || ''}
+                                                    onChange={(e) => handleDataChange('notes', e.target.value)}
+                                                    placeholder="Add notes about this node..."
+                                                    rows={4}
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-700 block mb-2">Node Color</label>
+                                                <div className="flex gap-2">
+                                                    {['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6'].map((color) => (
+                                                        <button
+                                                            key={color}
+                                                            className="w-8 h-8 rounded-full border-2 border-gray-200 hover:border-gray-400"
+                                                            style={{ backgroundColor: color }}
+                                                            onClick={() => handleDataChange('color', color)}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </TabsContent>
 
-                                <TabsContent value="settings" className="p-4">
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-700">Node Name</label>
-                                            <Input
-                                                value={nodeData?.data?.label || ''}
-                                                onChange={(e) => handleParameterChange('label', e.target.value)}
-                                                className="mt-1"
-                                            />
-                                        </div>
+                                <TabsContent value="docs" className="h-full">
+                                    <div className="h-full overflow-y-auto px-6 py-4">
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <BookOpen className="w-5 h-5 text-gray-600" />
+                                                <h3 className="font-semibold">Webhook Node Documentation</h3>
+                                                <ExternalLink className="w-4 h-4 text-gray-400" />
+                                            </div>
+                                            <div className="prose prose-sm max-w-none">
+                                                <p>The Webhook node allows you to receive HTTP requests and trigger workflows based on external events.</p>
 
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-700">Notes</label>
-                                            <Textarea
-                                                placeholder="Add notes about this node..."
-                                                className="mt-1"
-                                                rows={3}
-                                            />
-                                        </div>
-                                    </div>
-                                </TabsContent>
+                                                <h4>Key Features</h4>
+                                                <ul>
+                                                    <li>Listen for HTTP requests (GET, POST, PUT, DELETE, etc.)</li>
+                                                    <li>Handle different content types (JSON, form data, etc.)</li>
+                                                    <li>Configure custom response behavior</li>
+                                                    <li>Extract data from headers, query parameters, and body</li>
+                                                </ul>
 
-                                <TabsContent value="docs" className="p-4">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-2">
-                                            <BookOpen className="w-5 h-5 text-gray-600" />
-                                            <h3 className="font-medium">Documentation</h3>
-                                            <ExternalLink className="w-4 h-4 text-gray-400" />
-                                        </div>
-                                        <div className="prose prose-sm">
-                                            <p>The Webhook node allows you to receive HTTP requests and trigger workflows based on external events.</p>
-                                            <h4>Configuration</h4>
-                                            <ul>
-                                                <li>Set the HTTP method (GET, POST, PUT, DELETE)</li>
-                                                <li>Configure authentication if needed</li>
-                                                <li>Choose response behavior</li>
-                                            </ul>
+                                                <h4>Configuration</h4>
+                                                <ul>
+                                                    <li><strong>HTTP Method:</strong> Choose which HTTP methods to accept</li>
+                                                    <li><strong>Path:</strong> Set a custom path for the webhook URL</li>
+                                                    <li><strong>Authentication:</strong> Configure security if needed</li>
+                                                </ul>
+                                            </div>
                                         </div>
                                     </div>
                                 </TabsContent>
                             </div>
                         </Tabs>
+                    </div>
+                </div>
 
-                        <div className="border-t p-4 bg-gray-50">
-                            <div className="flex items-center justify-between mb-3">
-                                <h4 className="font-medium text-gray-900">OUTPUT</h4>
-                                <Button variant="ghost" size="sm">
-                                    <span className="w-4 h-4">📝</span>
-                                </Button>
-                            </div>
-
-                            <div className="text-center py-8 text-gray-500">
-                                <p className="text-sm">Execute this node to view data</p>
-                                <p className="text-sm">or <span className="text-red-600 cursor-pointer">set mock data</span></p>
-                            </div>
-
-                            <div className="flex items-center justify-center gap-2 mt-4">
-                                <span className="text-yellow-600">💡</span>
-                                <span className="text-sm text-gray-600">I wish this node would...</span>
-                            </div>
-                        </div>
+                {/* Footer with Action Buttons */}
+                <div className="border-t p-6 bg-gray-50 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span className="text-yellow-600">💡</span>
+                        <span>Tip: Use the test button to validate your webhook configuration</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Button variant="outline" onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                if (nodeData) {
+                                    onSave(nodeData)
+                                    onClose()
+                                }
+                            }}
+                            className="bg-red-500 hover:bg-red-600 text-white"
+                        >
+                            Save Changes
+                        </Button>
                     </div>
                 </div>
             </DialogContent>

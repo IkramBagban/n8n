@@ -5,13 +5,13 @@ import {
   applyEdgeChanges,
   addEdge,
   type Edge,
-  type OnNodesChange,
   type OnEdgesChange,
   type OnConnect,
 } from "@xyflow/react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Node } from "@/lib/types";
+import { useWorkflowCtx } from "@/store/workflow/workflow-context";
 
 interface WorkflowData {
   id?: string;
@@ -42,7 +42,9 @@ export const useWorkflowEditor = ({
   const [workflowData, setWorkflowData] = useState<WorkflowData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const router = useRouter();
+  const workflowCtx = useWorkflowCtx();
 
   const onNodesChange = useCallback(
     (changes) =>
@@ -95,6 +97,7 @@ export const useWorkflowEditor = ({
       setWorkflowData(data);
       setNodes(data.nodes || []);
       setEdges(data.edges || []);
+      workflowCtx.addWorkflow(data);
     } catch (err) {
       console.error("Error loading workflow:", err);
       setError("Failed to load workflow");

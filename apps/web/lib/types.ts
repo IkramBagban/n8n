@@ -7,6 +7,12 @@ export type Node = {
   name: string;
 };
 
+export interface Edge {
+  id: string;
+  source: string;
+  target: string;
+}
+
 export interface Workflow {
   id: string;
   name: string;

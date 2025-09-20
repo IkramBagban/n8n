@@ -114,9 +114,9 @@ export function WorkflowSidebar({
                         <p className="text-sm text-gray-600 mb-4">
                             A trigger is a step that starts your workflow
                         </p>
-                        {filteredTriggers.map((trigger) => (
+                        {filteredTriggers?.map((trigger) => (
                             <div
-                                key={trigger.id}
+                                key={Date.now() + Math.random()}
                                 className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 cursor-pointer transition-colors"
                                 onClick={() => onNodeSelect(trigger)}
                             >

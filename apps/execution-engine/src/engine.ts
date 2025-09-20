@@ -1,3 +1,5 @@
+import { predefinedNodesTypes } from "@repo/nodes-base/utils/constants";
+
 export type Node = {
   id: string;
   type: string;
@@ -33,7 +35,7 @@ export class Engine {
     this.executeNode(triggerNode, nodes, edges);
   }
 
-  executeNode(currentNode: Node | null, nodes: Node[], edges: Edge[]) {
+  async executeNode(currentNode: Node | null, nodes: Node[], edges: Edge[]) {
     if (!currentNode) return console.error("workflow executed successfully");
     let isLastNode = false;
     let nextNode;
@@ -45,7 +47,11 @@ export class Engine {
         break;
 
       case "telegram":
-        console.log("telegram is executing");
+        const telegram = predefinedNodesTypes["nodes-base.telegram"];
+        const response = await telegram.type.execute({
+          parameters: currentNode.parameters,
+        });
+
         nextNode = this.getConnectedNode(currentNode, nodes, edges);
         this.executeNode(nextNode, nodes, edges);
         break;
