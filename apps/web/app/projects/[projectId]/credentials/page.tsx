@@ -3,12 +3,70 @@ import { DashboardTabs } from "@/components/dashboard-tabs"
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, Key } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Search, Plus, Key, MoreHorizontal } from "lucide-react"
 import { projectInstance } from "@/actions/projects"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import prismaClient from "@repo/db"
 
 interface ProjectCredentialsPageProps {
     params: {
         projectId: string
+    }
+}
+
+interface Credential {
+    id: string
+    name: string
+    type: string
+    createdAt: string
+    updatedAt: string
+}
+
+async function getCredentials(projectId: string): Promise<Credential[]> {
+    try {
+        const session = await getServerSession(authOptions)
+
+        if (!session?.user?.id) {
+            return []
+        }
+
+        const project = await prismaClient.project.findFirst({
+            where: {
+                id: projectId,
+                userId: session.user.id
+            }
+        })
+
+        if (!project) {
+            return []
+        }
+
+        const credentials = await prismaClient.credentials.findMany({
+            where: {
+                projectId
+            },
+            select: {
+                id: true,
+                name: true,
+                type: true,
+                createdAt: true,
+                updatedAt: true
+            },
+            orderBy: {
+                updatedAt: 'desc'
+            }
+        })
+
+        return credentials.map(cred => ({
+            ...cred,
+            createdAt: cred.createdAt.toISOString(),
+            updatedAt: cred.updatedAt.toISOString()
+        }))
+    } catch (error) {
+        console.error('Error fetching credentials:', error)
+        return []
     }
 }
 
@@ -17,13 +75,12 @@ export default async function ProjectCredentialsPage({ params }: ProjectCredenti
 
     const project = await projectInstance.getProjectById(projectId)
 
-
-    // If project not found, show 404
     if (!project) {
         notFound()
     }
 
-    // Project tabs
+    const credentials = await getCredentials(projectId)
+
     const projectTabs = [
         {
             value: "workflows",
@@ -47,30 +104,31 @@ export default async function ProjectCredentialsPage({ params }: ProjectCredenti
         }
     ]
 
-    // Mock credentials data
-    const credentials = [
-        {
-            id: "1",
-            name: "GitHub API",
-            type: "GitHub",
-            status: "connected",
-            lastUsed: "2 hours ago"
-        },
-        {
-            id: "2",
-            name: "Google Sheets",
-            type: "Google",
-            status: "connected",
-            lastUsed: "1 day ago"
-        },
-        {
-            id: "3",
-            name: "Slack Bot",
-            type: "Slack",
-            status: "error",
-            lastUsed: "3 days ago"
+    const getCredentialDisplayName = (type: string) => {
+        switch (type.toLowerCase()) {
+            case 'telegramapi':
+                return 'Telegram API'
+            case 'gmailoauth2api':
+                return 'Gmail OAuth2 API'
+            default:
+                return type
         }
-    ]
+    }
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString)
+        const now = new Date()
+        const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+
+        if (diffInHours < 1) {
+            return 'just now'
+        } else if (diffInHours < 24) {
+            return `${diffInHours} hours ago`
+        } else {
+            const diffInDays = Math.floor(diffInHours / 24)
+            return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`
+        }
+    }
 
     return (
         <div className="flex flex-col min-h-full bg-gray-50">
@@ -82,38 +140,63 @@ export default async function ProjectCredentialsPage({ params }: ProjectCredenti
             <main className="flex-1 p-6">
                 <div className="max-w-6xl mx-auto">
 
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h1 className="text-2xl font-semibold text-gray-900">Credentials</h1>
-                            <p className="text-sm text-gray-600 mt-1">Manage your project credentials</p>
-                        </div>
-                        <Button className="bg-red-500 hover:bg-red-600 text-white">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Credential
-                        </Button>
-                    </div>
+
 
                     <div className="flex items-center gap-4 mb-6">
                         <div className="relative max-w-sm">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <Input
-                                placeholder="Search credentials"
+                                placeholder="Search credentials..."
                                 className="pl-10"
                             />
                         </div>
+                        <select className="px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <option>Sort by last updated</option>
+                            <option>Sort by name</option>
+                            <option>Sort by type</option>
+                        </select>
                     </div>
 
-                    <div className="text-center py-12">
-                        <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-lg mx-auto mb-4">
-                            <Key className="w-8 h-8 text-gray-400" />
+                    {credentials.length > 0 ? (
+                        <div className="space-y-3">
+                            {credentials.map((credential) => (
+                                <div key={credential.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div>
+                                            <h3 className="font-medium text-gray-900">{credential.name}</h3>
+                                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                <span>{getCredentialDisplayName(credential.type)}</span>
+                                                <span>|</span>
+                                                <span>Last updated {formatDate(credential.updatedAt)}</span>
+                                                <span>|</span>
+                                                <span>Created {new Date(credential.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                                            {project.name}
+                                        </Badge>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                            <MoreHorizontal className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                        <h2 className="text-lg font-medium text-gray-900 mb-2">No credentials yet</h2>
-                        <p className="text-gray-600 mb-4">Add your first credential to connect external services</p>
-                        <Button className="bg-red-500 hover:bg-red-600 text-white">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Credential
-                        </Button>
-                    </div>
+                    ) : (
+                        <div className="text-center py-12">
+                            <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-lg mx-auto mb-4">
+                                <Key className="w-8 h-8 text-gray-400" />
+                            </div>
+                            <h2 className="text-lg font-medium text-gray-900 mb-2">No credentials yet</h2>
+                            <p className="text-gray-600 mb-4">Add your first credential to connect external services</p>
+                            <Button className="bg-red-500 hover:bg-red-600 text-white">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Credential
+                            </Button>
+                        </div>
+                    )}
 
                 </div>
             </main>

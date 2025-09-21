@@ -5,17 +5,18 @@ import { ChevronDown, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CreateCredentialModal } from "@/components/create-credential-modal"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 
 
 
-interface CreateDropdownProps {
-    projectId?: string
-}
-
-export function CreateDropdown({ projectId = "cmfjrtqt40001v7oc8j6a4rz2" }: CreateDropdownProps) {
+export function CreateDropdown() {
     const [isCredentialModalOpen, setIsCredentialModalOpen] = useState(false)
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
+    const { projectId } = useParams() as { projectId: string }
+
+    // # todo
+    // if(!project) then i should create in personal project
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
