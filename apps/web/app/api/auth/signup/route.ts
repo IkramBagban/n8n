@@ -9,7 +9,6 @@ export const POST = async (req: NextRequest) => {
 
   const schemaResult = signupSchema.safeParse(body);
 
-  console.log("schemaResult", JSON.stringify(schemaResult, null, 2));
   if (!schemaResult.success) {
     return NextResponse.json({ error: schemaResult.error }, { status: 400 });
   }
@@ -17,7 +16,6 @@ export const POST = async (req: NextRequest) => {
   const user = await prismaClient.user.findFirst({
     where: { email: body.email },
   });
-  console.log("User", user);
   if (user) {
     return NextResponse.json({ error: "User already exists" }, { status: 400 });
   }

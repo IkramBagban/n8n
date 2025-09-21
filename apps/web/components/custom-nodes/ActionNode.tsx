@@ -13,8 +13,6 @@ interface ActionNodeProps {
 }
 
 export function ActionNode({ data }: ActionNodeProps) {
-    console.log("ActionNode :", data);
-
     return (
         <div className="action-node relative flex justify-center items-center border border-gray-300 rounded-lg bg-white shadow-sm w-10 h-10">
             <Send className="w-5 h-5 text-blue-600" />

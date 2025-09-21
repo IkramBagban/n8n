@@ -10,7 +10,6 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
 
   const getSelectedNode = () => {
-    console.log("workflow.nodes", workflow.nodes)
     if (workflow.nodes?.length < 1) return null
     return workflow.nodes?.find(node => node.id === selectedNodeId) || null
   }
@@ -28,8 +27,6 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
   const nodeParameterChangeHandler = (key: string, value: any) => {
     setWorkflow((prev: Workflow) => {
-      console.log("prev", prev)
-
       const updatedNodes = prev.nodes.map(node => {
         if (node.id === selectedNodeId) {
           node.parameters[key] = value

@@ -88,7 +88,6 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     };
 
     const handleNodeSelect = (nodeItem: NodeItem) => {
-        console.log("Selected node item:", nodeItem);
         const nodeType = nodeItem.group?.includes('trigger') || nodeItem.category === 'triggers' || sidebarMode === 'triggers' ? 'trigger' : 'action';
 
         const nodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -119,7 +118,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
             await saveWorkflow();
             alert('Workflow saved successfully!');
         } catch (error) {
-            console.log("Error saving workflow:", error);
+            console.error("Error saving workflow:", error);
             alert('Error saving workflow. Please try again.');
         } finally {
             setIsSaving(false);
@@ -128,8 +127,6 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
     const handleExecuteWorkflow = async () => {
         const payload = { workflowId, nodes, edges }
-        console.log("payload", payload);
-
         const response = await axios.post("/api/rest/workflows/execute", payload)
         console.log("response", response)
     }

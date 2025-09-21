@@ -24,7 +24,7 @@ export const GET = async (
     }
     return NextResponse.json({ data: project }, { status: 200 });
   } catch (error) {
-    console.log("Error fetching project:", error);
+    console.error("Error fetching project:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

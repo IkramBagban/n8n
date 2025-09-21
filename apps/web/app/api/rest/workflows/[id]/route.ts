@@ -44,9 +44,6 @@ export const PATCH = async (
     const { name, nodes, edges, active, tags, projectId } = body;
     const { id: workflowId } = await params;
 
-    console.log("workflowId", workflowId);
-    console.log("data", { body, workflowId });
-
     const schemaResult = createWorkflowSchema.safeParse(body);
     if (!schemaResult.success) {
       return NextResponse.json(
@@ -127,7 +124,7 @@ export const PATCH = async (
 
     return NextResponse.json({ data: responsePayload }, { status: 200 });
   } catch (error) {
-    console.log("error ==> ", error);
+    console.error("error ==> ", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

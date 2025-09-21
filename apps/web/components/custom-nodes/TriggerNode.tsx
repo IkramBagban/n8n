@@ -4,8 +4,6 @@ import { Handle, Position } from "@xyflow/react";
 import { Zap } from "lucide-react";
 
 export function TriggerNode({ data }: any) {
-  console.log("TriggerNode :", data);
-
   return (
     <div className="trigger-node relative flex justify-center items-center border border-gray-300 rounded-l-3xl bg-white shadow-sm w-10 h-10">
       <Zap className="w-5 h-5" />
