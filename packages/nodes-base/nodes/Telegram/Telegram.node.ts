@@ -58,12 +58,12 @@ export class Telegram implements INodeType {
     // usableAsTool: true,
     // inputs: [NodeConnectionTypes.Main],
     // outputs: [NodeConnectionTypes.Main],
-    // credentials: [
-    //   {
-    //     name: "telegramApi",
-    //     required: true,
-    //   },
-    // ],
+    credentials: [
+      {
+        name: "telegramApi",
+        required: true,
+      },
+    ],
     // webhooks: sendAndWaitWebhooksDescription,
     properties: [
       preBuiltAgentsCallout,

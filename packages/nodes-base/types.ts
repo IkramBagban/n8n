@@ -87,11 +87,15 @@ export type NodePropertyTypes =
   | "credentials"
   | "workflowSelector";
 
+export interface INodePropertyTypeOptions {
+  password?: boolean; 
+  // [key: string]: any;
+}
 export interface INodeProperties {
   displayName: string;
   name: string;
   type: NodePropertyTypes;
-  //   typeOptions?: INodePropertyTypeOptions;
+  typeOptions?: INodePropertyTypeOptions;
   // default: NodeParameterValueType;
   default: any;
   description?: string;
@@ -125,6 +129,29 @@ export interface INodeProperties {
   allowArbitraryValues?: boolean;
 }
 
+export type NodeParameterValue = string | number | boolean | undefined | null;
+
+export interface ICredentialsDisplayOptions {
+  hide?: {
+    [key: string]: NodeParameterValue[] | undefined;
+  };
+  show?: {
+    "@version"?: number[];
+    [key: string]: NodeParameterValue[] | undefined;
+  };
+
+  hideOnCloud?: boolean;
+}
+
+export interface INodeCredentialDescription {
+  name: string;
+  required?: boolean;
+  displayName?: string;
+  disabledOptions?: ICredentialsDisplayOptions;
+  displayOptions?: ICredentialsDisplayOptions;
+  // testedBy?: ICredentialTestRequest | string; // Name of a function inside `loadOptions.credentialTest`
+}
+
 export interface INodeTypeDescription extends INodeTypeBaseDescription {
   version: number | number[];
   defaults: NodeDefaults;
@@ -140,7 +167,7 @@ export interface INodeTypeDescription extends INodeTypeBaseDescription {
   //     | ExpressionString;
   outputNames?: string[];
   properties: INodeProperties[];
-  //   credentials?: INodeCredentialDescription[];
+  credentials?: INodeCredentialDescription[];
   maxNodes?: number; // How many nodes of that type can be created in a workflow
   polling?: true | undefined;
   supportsCORS?: true | undefined;
@@ -152,12 +179,12 @@ export interface INodeTypeDescription extends INodeTypeBaseDescription {
   //     deactivate?: INodeHookDescription[];
   //   };
   //   webhooks?: IWebhookDescription[];
-  translation?: { [key: string]: object };
-  mockManualExecution?: true;
+  // translation?: { [key: string]: object };
+  // mockManualExecution?: true;
   //   triggerPanel?: TriggerPanelDefinition | boolean;
-  extendsCredential?: string;
+  // extendsCredential?: string;
   //   hints?: NodeHint[];
-  __loadOptionsMethods?: string[]; // only for validation during build
+  // __loadOptionsMethods?: string[]; // only for validation during build
 }
 export interface INodeType {
   description: INodeTypeDescription;
@@ -216,4 +243,29 @@ export interface INodeType {
   // 		[operation: string]: (this: IExecuteFunctions) => Promise<NodeOutput>;
   // 	};
   // };
+}
+
+export type Themed<T> = T | { light: T; dark: T };
+export type IconRef = `fa:${string}` | `node:${string}.${string}`;
+export type IconFile = `file:${string}.png` | `file:${string}.svg`;
+export type Icon = IconRef | Themed<IconFile>;
+export interface ICredentialType {
+  name: string;
+  displayName: string;
+  icon?: Icon;
+  iconColor?: ThemeIconColor;
+  iconUrl?: Themed<string>;
+  extends?: string[];
+  properties: INodeProperties[];
+  documentationUrl?: string;
+  __overwrittenProperties?: string[];
+  authenticate?: IAuthenticate;
+  preAuthentication?: (
+    this: IHttpRequestHelper,
+    credentials: ICredentialDataDecryptedObject
+  ) => Promise<IDataObject>;
+  test?: ICredentialTestRequest;
+  genericAuth?: boolean;
+  httpRequestNode?: ICredentialHttpRequestNode;
+  supportedNodes?: string[];
 }

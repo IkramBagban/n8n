@@ -1,18 +1,18 @@
-import Link from "next/link"
-
+import { CreateDropdown } from "./create-dropdown"
 
 interface DashboardHeaderProps {
     title: string
     subtitle?: string
     showCreateButton?: boolean
+    projectId?: string
 }
 
 export function DashboardHeader({
     title,
     subtitle,
-    showCreateButton = true
+    showCreateButton = true,
+    projectId = "cmfjrtqt40001v7oc8j6a4rz2"
 }: DashboardHeaderProps) {
-    const projectId = "cmfjrtqt40001v7oc8j6a4rz2"
     return (
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div>
@@ -22,9 +22,7 @@ export function DashboardHeader({
                 )}
             </div>
             {showCreateButton && (
-                <Link href={`/workflow/new?projectId=${projectId}`} className="bg-red-500 hover:bg-red-600 text-white">
-                    Create Workflow
-                </Link>
+                <CreateDropdown projectId={projectId} />
             )}
         </div>
     )
