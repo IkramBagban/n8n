@@ -57,6 +57,17 @@ export class Engine {
         nextNode = this.getConnectedNode(currentNode, nodes, edges);
         this.executeNode(nextNode, nodes, edges);
         break;
+
+      case "resend":
+        const resend = predefinedNodesTypes["nodes-base.resend"];
+        const resp = await resend.type.execute({
+          parameters: currentNode.parameters,
+          credentialId: currentNode.credentialId,
+        });
+        console.log("resend resp ----> ", resp);
+        nextNode = this.getConnectedNode(currentNode, nodes, edges);
+        this.executeNode(nextNode, nodes, edges);
+        break;
     }
   }
 

@@ -10,7 +10,9 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@react-email/render": "^1.2.3",
     "@repo/db": "*",
+    "resend": "^6.1.0",
     "uuid": "^13.0.0"
   }
 }
