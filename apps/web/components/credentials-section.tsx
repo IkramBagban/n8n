@@ -21,7 +21,7 @@ interface CredentialType {
 interface CredentialsSectionProps {
     credentials: CredentialType[]
     availableCredentials: CredentialRecord[]
-    selectedCredentials: Record<string, string>
+    credentialId: string
     onCredentialChange: (credentialType: string, credentialId: string) => void
     onCreateCredential: (credentialType: string) => void
 }
@@ -29,7 +29,7 @@ interface CredentialsSectionProps {
 export function CredentialsSection({
     credentials,
     availableCredentials,
-    selectedCredentials,
+    credentialId,
     onCredentialChange,
     onCreateCredential
 }: CredentialsSectionProps) {
@@ -43,15 +43,14 @@ export function CredentialsSection({
                 const typeCredentials = availableCredentials.filter(
                     (cred) => cred.type === credentialType.name
                 )
-                const selectedCredential = selectedCredentials[credentialType.name] || ''
 
                 return (
                     <CredentialSelector
                         key={credentialType.name}
                         credentialType={credentialType}
                         availableCredentials={typeCredentials}
-                        selectedCredential={selectedCredential}
-                        onCredentialChange={(credentialId) => 
+                        credentialId={credentialId}
+                        onCredentialChange={(credentialId) =>
                             onCredentialChange(credentialType.name, credentialId)
                         }
                         onCreateNew={() => onCreateCredential(credentialType.name)}

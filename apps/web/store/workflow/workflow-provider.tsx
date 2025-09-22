@@ -53,6 +53,22 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     console.log({ nodeId, key, value })
 
   }
+
+  const changePropertyOfNode = (nodeId: string, key: string, value: any) => {
+    setWorkflow((prev: Workflow) => {
+      const updatedNodes = prev.nodes.map(node => {
+        if (node.id === nodeId) {
+          node[key] = value
+        }
+        return node
+      })
+      return {
+        ...prev,
+        nodes: updatedNodes
+      }
+    })
+  }
+
   const value = {
     addWorkflow,
     addNode, getSelectedNode, removeNode,
@@ -61,7 +77,8 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     selectedNodeId,
     setSelectedNodeId,
     nodeParameterChangeHandler,
-    setNodes
+    setNodes,
+    changePropertyOfNode
   }
   return <WorkflowContext.Provider value={value}>{children}</WorkflowContext.Provider>
 };

@@ -21,7 +21,7 @@ interface CredentialType {
 interface CredentialSelectorProps {
     credentialType: CredentialType
     availableCredentials: CredentialRecord[]
-    selectedCredential: string
+    credentialId: string
     onCredentialChange: (credentialId: string) => void
     onCreateNew: () => void
 }
@@ -29,7 +29,7 @@ interface CredentialSelectorProps {
 export function CredentialSelector({
     credentialType,
     availableCredentials,
-    selectedCredential,
+    credentialId,
     onCredentialChange,
     onCreateNew
 }: CredentialSelectorProps) {
@@ -47,7 +47,7 @@ export function CredentialSelector({
                 Credential to connect with
                 {credentialType.required && <span className="text-red-500 ml-1">*</span>}
             </label>
-            <Select value={selectedCredential} onValueChange={handleValueChange}>
+            <Select value={credentialId} onValueChange={handleValueChange}>
                 <SelectTrigger className="w-full h-12 px-3 border border-gray-300 rounded-md">
                     <SelectValue placeholder={`${credentialType.displayName || credentialType.name} account`} />
                 </SelectTrigger>

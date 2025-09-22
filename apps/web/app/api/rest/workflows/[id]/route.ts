@@ -84,6 +84,7 @@ export const PATCH = async (
               type: node.type,
               parameters: node.parameters || {},
               position: node.position || [0, 0],
+              credentialId: node.credentialId || null,
               data: node.data || {},
               workflowId,
             },

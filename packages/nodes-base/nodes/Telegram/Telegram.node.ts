@@ -35,13 +35,13 @@ import type {
 //   sendAndWaitWebhook,
 // } from "../../utils/sendAndWait/utils";
 
-const preBuiltAgentsCallout: INodeProperties = {
-  // eslint-disable-next-line n8n-nodes-base/node-param-display-name-miscased
-  displayName: "Interact with Telegram using our pre-built",
-  name: "preBuiltAgentsCalloutTelegram",
-  type: "callout",
-  default: "",
-};
+// const preBuiltAgentsCallout: INodeProperties = {
+//   // eslint-disable-next-line n8n-nodes-base/node-param-display-name-miscased
+//   displayName: "Interact with Telegram using our pre-built",
+//   name: "preBuiltAgentsCalloutTelegram",
+//   type: "callout",
+//   default: "",
+// };
 
 export class Telegram implements INodeType {
   description: INodeTypeDescription = {
@@ -66,7 +66,7 @@ export class Telegram implements INodeType {
     ],
     // webhooks: sendAndWaitWebhooksDescription,
     properties: [
-      preBuiltAgentsCallout,
+      // preBuiltAgentsCallout,
       {
         displayName: "Resource",
         name: "resource",

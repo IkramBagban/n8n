@@ -74,7 +74,6 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
         setNodeData((prev: Node | null) => {
             if (!prev) return prev
 
-            // Handle nested properties like selectedCredentials.TelegramApi
             if (key.includes('.')) {
                 const [parentKey, childKey] = key.split('.')
                 return {
@@ -124,8 +123,16 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
 
 
 
+
     const handleCredentialChange = (credentialType: string, credentialId: string) => {
-        handleDataChange(`selectedCredentials.${credentialType}`, credentialId)
+        setNodeData((prev: Node | null) => {
+            if (!prev) return prev
+
+            return {
+                ...prev,
+                credentialId: credentialId
+            }
+        })
     }
 
     const handleCreateCredential = (credentialType: string) => {
@@ -227,7 +234,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                                             <CredentialsSection
                                                 credentials={nodeData?.data?.credentials || []}
                                                 availableCredentials={credentials}
-                                                selectedCredentials={nodeData?.data?.selectedCredentials || {}}
+                                                credentialId={nodeData?.credentialId || ""}
                                                 onCredentialChange={handleCredentialChange}
                                                 onCreateCredential={handleCreateCredential}
                                             />
@@ -240,7 +247,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                                                         {Object.keys(nodeData?.data.properties || {}).map((key) => {
                                                             // console.log("Key", { key, props: nodeData?.data.properties })
                                                             const property = nodeData?.data.properties[key]
-                                                            
+
                                                             // Handle notice type differently - no label needed
                                                             if (property.type === 'notice') {
                                                                 return (
@@ -249,7 +256,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                                                                     </div>
                                                                 )
                                                             }
-                                                            
+
                                                             return (
                                                                 <div key={key} className="space-y-3">
                                                                     <label className="text-sm font-medium text-gray-700 block">
