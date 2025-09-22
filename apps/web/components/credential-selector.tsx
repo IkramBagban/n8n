@@ -55,12 +55,9 @@ export function CredentialSelector({
                     {availableCredentials.map((credential) => (
                         <SelectItem key={credential.id} value={credential.id} className="p-3">
                             <div className="flex items-center gap-3 w-full">
-                                <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
-                                    <span className="text-red-600 text-sm">📱</span>
-                                </div>
                                 <div className="flex-1">
                                     <div className="font-medium text-gray-900">{credential.name}</div>
-                                    <div className="text-xs text-gray-500">{credentialType.displayName || credentialType.name}</div>
+                                    {/* <div className="text-xs text-gray-500">{credentialType.displayName || credentialType.name}</div> */}
                                 </div>
                             </div>
                         </SelectItem>
@@ -79,7 +76,7 @@ export function CredentialSelector({
             {availableCredentials.length === 0 && (
                 <p className="text-sm text-gray-500">
                     No {credentialType.displayName || credentialType.name} credentials configured.
-                    <button 
+                    <button
                         className="text-blue-600 hover:underline ml-1"
                         onClick={onCreateNew}
                     >

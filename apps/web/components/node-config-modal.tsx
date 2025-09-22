@@ -240,6 +240,16 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                                                         {Object.keys(nodeData?.data.properties || {}).map((key) => {
                                                             // console.log("Key", { key, props: nodeData?.data.properties })
                                                             const property = nodeData?.data.properties[key]
+                                                            
+                                                            // Handle notice type differently - no label needed
+                                                            if (property.type === 'notice') {
+                                                                return (
+                                                                    <div key={key}>
+                                                                        {renderProperty(property)}
+                                                                    </div>
+                                                                )
+                                                            }
+                                                            
                                                             return (
                                                                 <div key={key} className="space-y-3">
                                                                     <label className="text-sm font-medium text-gray-700 block">
