@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Node } from "@/lib/types"
 import { useWorkflowCtx } from '@/store/workflow/workflow-context'
 import { getNodeCredentials } from '@/actions/credentials'
+import { CredentialsSection } from './credentials-section'
+import { PropertyRenderer } from './property-renderer'
 
 interface NodeConfigModalProps {
     node: Node | null
@@ -35,6 +37,17 @@ interface CredentialRecord {
     projectId: string;
     createdAt: Date;
     updatedAt: Date;
+}
+
+interface NodeProperty {
+    name: string;
+    displayName: string;
+    type: string;
+    default?: string | number | boolean;
+    required?: boolean;
+    placeholder?: string;
+    description?: string;
+    [key: string]: unknown;
 }
 
 export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: NodeConfigModalProps) {
@@ -113,160 +126,28 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
 
 
 
-    console.log("CREDEN", credentials)
-
-    const renderCredentials = () => {
-        if (!nodeData?.data?.credentials || nodeData?.data?.credentials?.length === 0) {
-            return <p className="text-sm text-gray-500">No credentials required for this node.</p>
-        }
-
-        return (
-            <div className="space-y-4">
-                {nodeData?.data?.credentials?.map((credentialType) => {
-                    // Find actual credentials that match this type
-                    const availableCredentials = credentials.filter((cred) => cred.type === credentialType.name)
-                    const selectedCredential = nodeData.data?.selectedCredentials?.[credentialType.name] || ''
-                    console.log("nodeData.data",nodeData.data)
-
-                    return (
-                        <div key={credentialType.name} className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700 block">
-                                Credential to connect with
-                            </label>
-                            <Select
-                                value={selectedCredential}
-                                onValueChange={(value) => {
-                                    if (value === "create-new") {
-                                        // Handle create new credential
-                                        console.log("Create new credential for", credentialType.name)
-                                        return
-                                    }
-                                    handleDataChange(`selectedCredentials.${credentialType.name}`, value)
-                                }}
-                            >
-                                <SelectTrigger className="w-full h-12 px-3 border border-gray-300 rounded-md">
-                                    <SelectValue placeholder={`${credentialType.displayName || credentialType.name} account`} />
-                                </SelectTrigger>
-                                <SelectContent className="w-full">
-                                    {availableCredentials.map((credential) => (
-                                        <SelectItem key={credential.id} value={credential.id} className="p-3">
-                                            <div className="flex items-center gap-3 w-full">
-                                                <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
-                                                    <span className="text-red-600 text-sm">📱</span>
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="font-medium text-gray-900">{credential.name}</div>
-                                                    <div className="text-xs text-gray-500">{credentialType.displayName || credentialType.name}</div>
-                                                </div>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                    <div className="border-t my-1"></div>
-                                    <SelectItem value="create-new" className="p-3">
-                                        <div className="flex items-center gap-3 text-blue-600">
-                                            <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
-                                                <span className="text-blue-600 text-sm">+</span>
-                                            </div>
-                                            <span className="font-medium">Create new credential</span>
-                                        </div>
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {availableCredentials.length === 0 && (
-                                <p className="text-sm text-gray-500">
-                                    No {credentialType.displayName || credentialType.name} credentials configured.
-                                    <button className="text-blue-600 hover:underline ml-1">
-                                        Create one now
-                                    </button>
-                                </p>
-                            )}
-                        </div>
-                    )
-                })}
-            </div>
-        )
+    const handleCredentialChange = (credentialType: string, credentialId: string) => {
+        handleDataChange(`selectedCredentials.${credentialType}`, credentialId)
     }
 
-    const renderProperty = (property) => {
-        if (!property) return null
+    const handleCreateCredential = (credentialType: string) => {
+        console.log("Create new credential for", credentialType)
+        // TODO: Open credential creation modal
+    }
 
-        const currentValue = workflowCtx.getSelectedNode()?.parameters[property?.name] || property.default || ''
-
-        switch (property?.type) {
-            case 'callout':
-                return (
-                    <div className="p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800">
-                        {property.displayName}
-                    </div>
-
-                )
-            case 'string':
-                return (
-                    <Input
-                        placeholder={property.placeholder || ''}
-                        value={currentValue}
-                        onChange={(e) => handleParameterChange(property.name, e.target.value)}
-                        className="mt-2"
-                    />
-                )
-            case 'number':
-                return (
-                    <Input
-                        type="number"
-                        value={currentValue}
-                        onChange={(e) => handleParameterChange(property.name, Number(e.target.value))}
-                        className="mt-2"
-                    />
-                )
-            case "options":
-                return (
-                    <Select value={currentValue} onValueChange={(value) => handleParameterChange(property.name, value)}>
-                        <SelectTrigger className="mt-2">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {
-                                property.options?.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                        {option.name}
-                                    </SelectItem>
-                                ))
-                            }
-                        </SelectContent>
-                    </Select>
-                )
-            case 'boolean':
-                return (
-                    <Select value={currentValue.toString()} onValueChange={(value) => handleParameterChange(property.name, value === 'true')}>
-                        <SelectTrigger className="mt-2">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="true">True</SelectItem>
-                            <SelectItem value="false">False</SelectItem>
-                        </SelectContent>
-                    </Select>
-                )
-            case 'textarea':
-                return (
-                    <Textarea
-                        placeholder={property.placeholder || ''}
-                        value={currentValue}
-                        onChange={(e) => handleParameterChange(property.name, e.target.value)}
-                        className="mt-2"
-                        rows={property.rows || 3}
-                    />
-                )
-            default:
-                return (
-                    <Input
-                        placeholder={property.placeholder || ''}
-                        value={currentValue}
-                        onChange={(e) => handleParameterChange(property.name, e.target.value)}
-                        className="mt-2"
-                    />
-                )
-        }
+    const renderProperty = (property: unknown) => {
+        if (!property || typeof property !== 'object') return null
+        
+        const prop = property as NodeProperty
+        const currentValue = workflowCtx.getSelectedNode()?.parameters[prop?.name] || prop.default || ''
+        
+        return (
+            <PropertyRenderer
+                property={prop}
+                value={currentValue}
+                onChange={(value) => handleParameterChange(prop.name, value)}
+            />
+        )
     }
 
     return (
@@ -350,8 +231,16 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                                 <TabsContent value="parameters" className="h-full">
                                     <div className="h-full overflow-y-auto px-6 py-4">
                                         <div className="space-y-6">
+                                            {/* Credentials Section */}
+                                            <CredentialsSection
+                                                credentials={nodeData?.data?.credentials || []}
+                                                availableCredentials={credentials}
+                                                selectedCredentials={nodeData?.data?.selectedCredentials || {}}
+                                                onCredentialChange={handleCredentialChange}
+                                                onCreateCredential={handleCreateCredential}
+                                            />
+                                            
                                             {/* Dynamic Properties */}
-                                            {renderCredentials()}
                                             {Object.keys(nodeData?.data?.properties || {}).length > 0 && (
                                                 <div>
                                                     <h4 className="font-semibold text-gray-900 mb-4">Configuration</h4>

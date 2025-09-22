@@ -9,9 +9,9 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { INodeProperties } from "../../../packages/nodes-base/types"
+import { FieldRenderer } from './field-renderer'
 
 interface CredentialConfigModalProps {
     isOpen: boolean
@@ -44,31 +44,13 @@ export function CredentialConfigModal({
 
     const renderField = (property: INodeProperties) => {
         const value = credentialData[property.name] || property.default || ""
-
-        switch (property.type) {
-            case 'string':
-                return (
-                    <Input
-                        key={property.name}
-                        type={property.typeOptions?.password ? "password" : "text"}
-                        placeholder={property.placeholder || ""}
-                        value={value}
-                        onChange={(e) => handleFieldChange(property.name, e.target.value)}
-                        className="w-full"
-                    />
-                )
-            case 'hidden':
-                return null
-            default:
-                return (
-                    <Input
-                        key={property.name}
-                        value={value}
-                        onChange={(e) => handleFieldChange(property.name, e.target.value)}
-                        className="w-full"
-                    />
-                )
-        }
+        return (
+            <FieldRenderer
+                property={property}
+                value={value}
+                onChange={(value) => handleFieldChange(property.name, value)}
+            />
+        )
     }
 
     const handleSave = async () => {
