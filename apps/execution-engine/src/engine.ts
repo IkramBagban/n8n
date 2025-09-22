@@ -7,6 +7,7 @@ export type Node = {
   parameters: Record<string, any>;
   data: Record<string, any>;
   name: string;
+  credentialId?: string;
 };
 
 interface Edge {
@@ -36,7 +37,7 @@ export class Engine {
   }
 
   async executeNode(currentNode: Node | null, nodes: Node[], edges: Edge[]) {
-    if (!currentNode) return console.error("workflow executed successfully");
+    if (!currentNode) return console.info("> workflow executed successfully");
     let isLastNode = false;
     let nextNode;
     console.info(currentNode.name);
@@ -50,6 +51,7 @@ export class Engine {
         const telegram = predefinedNodesTypes["nodes-base.telegram"];
         const response = await telegram.type.execute({
           parameters: currentNode.parameters,
+          credentialId: currentNode.credentialId,
         });
 
         nextNode = this.getConnectedNode(currentNode, nodes, edges);

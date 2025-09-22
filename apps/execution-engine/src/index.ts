@@ -11,7 +11,6 @@ const main = async () => {
     const job = await redisClient.brPop("execute-workflow", 0);
     const parsedJob = job ? JSON.parse(job.element) : null;
     const workflowId = parsedJob?.workflowId;
-
     await engine.run({
       workflowId,
       nodes: parsedJob.nodes,

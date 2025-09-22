@@ -20,6 +20,7 @@ import type {
   INodeType,
   INodeTypeDescription,
 } from "../../types";
+import prismaClient from "@repo/db";
 
 // import {
 //   addAdditionalFields,
@@ -155,15 +156,23 @@ export class Telegram implements INodeType {
     ],
   };
 
-  async execute({
-    parameters,
-    accessToken = "7802384127:AAGLoVv-rmVT54gepxa-2rjfr4YAzCi5HB0",
-  }: any) {
+  async execute({ parameters, credentialId }: any) {
+    console.log("params -------> ", { parameters, credentialId });
     if (!parameters) {
       return console.error("parameters are not provided");
     }
 
-    const url = `https://api.telegram.org/bot${accessToken}/sendMessage?chat_id=${parameters?.chatId}&text=${parameters.text}`;
+    if (!credentialId) {
+      return console.error("credentialId is not provided");
+    }
+
+    const credential = await prismaClient.credentials.findFirst({
+      where: { id: credentialId },
+      select: { data: true },
+    });
+
+    console.log("feteched credential ----> ", credential);
+    const url = `https://api.telegram.org/bot${credential?.data?.accessToken}/sendMessage?chat_id=${parameters?.chatId}&text=${parameters.text}`;
     const response = await fetch(url);
     const data = await response.json();
     console.log(JSON.stringify(data, null, 2));
