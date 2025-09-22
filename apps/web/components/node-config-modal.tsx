@@ -12,8 +12,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Node } from "@/lib/types"
 import { useWorkflowCtx } from '@/store/workflow/workflow-context'
 import { getNodeCredentials } from '@/actions/credentials'
@@ -137,10 +135,10 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
 
     const renderProperty = (property: unknown) => {
         if (!property || typeof property !== 'object') return null
-        
+
         const prop = property as NodeProperty
         const currentValue = workflowCtx.getSelectedNode()?.parameters[prop?.name] || prop.default || ''
-        
+
         return (
             <PropertyRenderer
                 property={prop}
@@ -153,11 +151,10 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent
-                className="!max-w-none !w-[50vw] !h-[95vh] p-0 overflow-hidden"
+                className="!max-w-none !w-[60vw] !h-[90vh] p-0 overflow-hidden flex flex-col"
                 showCloseButton={false}
             >
-                {/* Header */}
-                <DialogHeader className="flex flex-row items-center justify-between p-6 border-b bg-white">
+                <DialogHeader className="flex flex-row items-center justify-between p-6 border-b bg-white flex-shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                             <span className="text-red-600 text-lg">🪝</span>
@@ -166,11 +163,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                             <DialogTitle className="text-xl font-semibold">
                                 {nodeData?.data?.label || nodeData?.name || 'Node Configuration'}
                             </DialogTitle>
-                            <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
-                                    Webhook Node
-                                </Badge>
-                            </div>
+
                         </div>
                     </div>
                     <Button
@@ -183,8 +176,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                     </Button>
                 </DialogHeader>
 
-                {/* Main Content */}
-                <div className="flex flex-1 h-full">
+                <div className="flex flex-1 h-full min-h-0">
                     {/* Left Panel - Test Section */}
                     {/* <div className="w-2/5 border-r flex flex-col bg-gray-50">
                         <div className="p-6 border-b bg-white">
@@ -216,9 +208,9 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                     </div> */}
 
                     {/* Right Panel - Configuration */}
-                    <div className="flex-1 flex flex-col">
-                        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-                            <TabsList className="grid w-[50%] grid-cols-2 mx-6 mt-6 mb-0" >
+                    <div className="flex-1 flex flex-col min-h-0">
+                        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+                            <TabsList className="grid w-[50%] grid-cols-2 mx-6 mt-6 mb-0 flex-shrink-0" >
                                 <TabsTrigger value="parameters" className="flex items-center gap-2" >
                                     <Settings className="w-4 h-4" />
                                     Parameters
@@ -227,8 +219,8 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                             </TabsList>
 
                             {/* Scrollable Content Area */}
-                            <div className="flex-1 overflow-hidden">
-                                <TabsContent value="parameters" className="h-full">
+                            <div className="flex-1 overflow-hidden min-h-0">
+                                <TabsContent value="parameters" className="h-full m-0">
                                     <div className="h-full overflow-y-auto px-6 py-4">
                                         <div className="space-y-6">
                                             {/* Credentials Section */}
@@ -239,24 +231,26 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                                                 onCredentialChange={handleCredentialChange}
                                                 onCreateCredential={handleCreateCredential}
                                             />
-                                            
+
                                             {/* Dynamic Properties */}
                                             {Object.keys(nodeData?.data?.properties || {}).length > 0 && (
                                                 <div>
                                                     <h4 className="font-semibold text-gray-900 mb-4">Configuration</h4>
-                                                    <div className="space-y-4">
+                                                    <div className="space-y-6">
                                                         {Object.keys(nodeData?.data.properties || {}).map((key) => {
                                                             // console.log("Key", { key, props: nodeData?.data.properties })
                                                             const property = nodeData?.data.properties[key]
                                                             return (
-                                                                <div key={key} className="space-y-2">
+                                                                <div key={key} className="space-y-3">
                                                                     <label className="text-sm font-medium text-gray-700 block">
                                                                         {property.displayName}
                                                                         {property.required && <span className="text-red-500 ml-1">*</span>}
                                                                     </label>
-                                                                    {renderProperty(property)}
+                                                                    <div className="w-full">
+                                                                        {renderProperty(property)}
+                                                                    </div>
                                                                     {property.description && (
-                                                                        <p className="text-xs text-gray-500">{property.description}</p>
+                                                                        <p className="text-xs text-gray-500 mt-1">{property.description}</p>
                                                                     )}
                                                                 </div>
                                                             )
@@ -265,55 +259,37 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                                                 </div>
                                             )}
 
-                                            {/* Additional Options */}
-                                            <div>
-                                                <h4 className="font-semibold text-gray-900 mb-4">Additional Options</h4>
-                                                <div className="space-y-4">
-                                                    <div>
-                                                        <label className="text-sm font-medium text-gray-700 block mb-2">
-                                                            Response Mode
-                                                        </label>
-                                                        <Select defaultValue="responseCode">
-                                                            <SelectTrigger>
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="responseCode">Response Code</SelectItem>
-                                                                <SelectItem value="responseData">Response Data</SelectItem>
-                                                                <SelectItem value="noResponse">No Response</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <div className="h-4"></div>
                                         </div>
                                     </div>
                                 </TabsContent>
 
-                                <TabsContent value="settings" className="h-full">
+                                <TabsContent value="settings" className="h-full m-0">
                                     <div className="h-full overflow-y-auto px-6 py-4">
                                         <div className="space-y-6">
                                             <div>
-                                                <label className="text-sm font-medium text-gray-700 block mb-2">Node Name</label>
+                                                <label className="text-sm font-medium text-gray-700 block mb-3">Node Name</label>
                                                 <Input
                                                     value={nodeData?.data?.label || nodeData?.name || ''}
                                                     onChange={(e) => handleDataChange('label', e.target.value)}
                                                     placeholder="Enter node name"
+                                                    className="w-full"
                                                 />
                                             </div>
 
                                             <div>
-                                                <label className="text-sm font-medium text-gray-700 block mb-2">Notes</label>
+                                                <label className="text-sm font-medium text-gray-700 block mb-3">Notes</label>
                                                 <Textarea
                                                     value={nodeData?.data?.notes || ''}
                                                     onChange={(e) => handleDataChange('notes', e.target.value)}
                                                     placeholder="Add notes about this node..."
                                                     rows={4}
+                                                    className="w-full"
                                                 />
                                             </div>
 
                                             <div>
-                                                <label className="text-sm font-medium text-gray-700 block mb-2">Node Color</label>
+                                                <label className="text-sm font-medium text-gray-700 block mb-3">Node Color</label>
                                                 <div className="flex gap-2">
                                                     {['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6'].map((color) => (
                                                         <button
@@ -325,6 +301,9 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                                                     ))}
                                                 </div>
                                             </div>
+
+                                            {/* Add some bottom padding */}
+                                            <div className="h-4"></div>
                                         </div>
                                     </div>
                                 </TabsContent>
@@ -363,7 +342,6 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                     </div>
                 </div>
 
-                {/* Footer with Action Buttons */}
                 <div className="border-t p-6 bg-gray-50 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                         <span className="text-yellow-600">💡</span>

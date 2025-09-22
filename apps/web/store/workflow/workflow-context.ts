@@ -16,6 +16,7 @@ type WorkflowContextType = {
   selectedNodeId: string;
   setSelectedNodeId: Dispatch<SetStateAction<string>>;
   nodeParameterChangeHandler: (key: string, value: any) => void;
+  setNodes: (nodes: Node[]) => void;
 };
 
 export const WorkflowContext = createContext<WorkflowContextType>({
@@ -27,6 +28,7 @@ export const WorkflowContext = createContext<WorkflowContextType>({
   setSelectedNodeId: () => {},
   workflow: { workflowId: "", nodes: [], edges: [] },
   nodeParameterChangeHandler: (key, value) => {},
+  setNodes: (nodes: Node[]) => {},
 });
 
 export const useWorkflowCtx = () => useContext(WorkflowContext);

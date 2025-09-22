@@ -14,6 +14,9 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     return workflow.nodes?.find(node => node.id === selectedNodeId) || null
   }
 
+  const setNodes = (nodes: Node[]) => {
+    setWorkflow(prev => ({ ...prev, nodes }))
+  }
   const addWorkflow = (workflow: Workflow) => setWorkflow(workflow)
   const addNode = (node: Node) => {
     setWorkflow(prev => ({
@@ -57,7 +60,8 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     workflow,
     selectedNodeId,
     setSelectedNodeId,
-    nodeParameterChangeHandler
+    nodeParameterChangeHandler,
+    setNodes
   }
   return <WorkflowContext.Provider value={value}>{children}</WorkflowContext.Provider>
 };

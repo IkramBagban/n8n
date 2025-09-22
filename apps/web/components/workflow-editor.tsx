@@ -67,15 +67,20 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     const handleNodeModalClose = () => {
         setIsNodeModalOpen(false);
         workflowCtx.setSelectedNodeId(null)
-        setSelectedNode(null);  
+        setSelectedNode(null);
     };
 
     const handleNodeSave = (updatedNode: Node) => {
-        setNodes((currentNodes) =>
-            currentNodes.map((node) =>
+        setNodes((currentNodes) => {
+
+            const updatedNodes = currentNodes.map((node) =>
                 node.id === updatedNode.id ? updatedNode : node
             )
-        );
+
+
+            workflowCtx.setNodes(updatedNodes)
+            return updatedNodes
+        });
     };
 
     const handleAddNode = () => {
