@@ -28,6 +28,7 @@ interface NodeItem {
     type: 'trigger' | 'action';
     group?: string[];
     category: string;
+    credentials?: Array<{ name: string; required: boolean }>;
 }
 
 interface WorkflowSidebarProps {

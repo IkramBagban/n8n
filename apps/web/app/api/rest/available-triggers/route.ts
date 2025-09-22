@@ -13,9 +13,9 @@ export const GET = async () => {
       version: nodeType.description.version,
       defaultVersion: nodeType.description.defaultVersion,
       properties: nodeType.description.properties,
+      credentials: nodeType.description.credentials,
     };
   });
 
   return NextResponse.json(availableNodes);
 };
-

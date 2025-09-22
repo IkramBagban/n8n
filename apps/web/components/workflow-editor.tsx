@@ -67,7 +67,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     const handleNodeModalClose = () => {
         setIsNodeModalOpen(false);
         workflowCtx.setSelectedNodeId(null)
-        setSelectedNode(null);
+        setSelectedNode(null);  
     };
 
     const handleNodeSave = (updatedNode: Node) => {
@@ -102,10 +102,12 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 label: nodeItem.displayName || nodeItem.name,
                 nodeType: nodeItem.id,
                 category: nodeItem.category || nodeItem.group?.[0] || 'default',
+                credentials: nodeItem.credentials, // this tells which credential we want.
                 properties: nodeItem.properties
             },
         };
 
+        console.log("new node", newNode)
         workflowCtx.addNode(newNode)
 
         setNodes((currentNodes) => [...currentNodes, newNode]);
@@ -301,6 +303,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
             />
 
             <NodeConfigModal
+                projectId={workflowData?.homeProject?.id || ''}
                 node={selectedNode}
                 isOpen={isNodeModalOpen}
                 onClose={handleNodeModalClose}

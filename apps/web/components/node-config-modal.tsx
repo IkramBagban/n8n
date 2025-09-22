@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { X, ExternalLink, Play, Settings, BookOpen } from 'lucide-react'
+import { X, ExternalLink, Settings, BookOpen } from 'lucide-react'
 import {
     Dialog,
     DialogContent,
@@ -16,18 +16,31 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Node } from "@/lib/types"
 import { useWorkflowCtx } from '@/store/workflow/workflow-context'
+import { getNodeCredentials } from '@/actions/credentials'
 
 interface NodeConfigModalProps {
     node: Node | null
     isOpen: boolean
     onClose: () => void
     onSave: (nodeData: Node) => void
+    projectId: string | null
 }
 
-export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigModalProps) {
+
+interface CredentialRecord {
+    id: string;
+    name: string;
+    type: string;
+    data: unknown;
+    projectId: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: NodeConfigModalProps) {
     const [nodeData, setNodeData] = useState<Node | null>(node)
     const [activeTab, setActiveTab] = useState('parameters')
-
+    const [credentials, setCredentials] = useState<CredentialRecord[]>([])
     const workflowCtx = useWorkflowCtx();
     const handleParameterChange = (key: string, value: string | number | boolean) => {
         if (!nodeData) return
@@ -49,6 +62,22 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigMod
 
         setNodeData((prev: Node | null) => {
             if (!prev) return prev
+
+            // Handle nested properties like selectedCredentials.TelegramApi
+            if (key.includes('.')) {
+                const [parentKey, childKey] = key.split('.')
+                return {
+                    ...prev,
+                    data: {
+                        ...prev.data,
+                        [parentKey]: {
+                            ...prev.data?.[parentKey],
+                            [childKey]: value
+                        }
+                    }
+                }
+            }
+
             return {
                 ...prev,
                 data: {
@@ -63,9 +92,102 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigMod
         setNodeData(node)
     }, [node])
 
+    useEffect(() => {
+        const fetchCredentials = async () => {
+            console.log("in get credentials", { nodeData, node })
+            if (!nodeData?.data?.credentials || nodeData?.data?.credentials?.length === 0) {
+                console.log("in")
+                return <p className="text-sm text-gray-500">No credentials required for this node.</p>
+            }
+
+            const creds = await getNodeCredentials(nodeData?.data?.credentials || [], projectId);
+            console.log("credentials", creds)
+            setCredentials(creds);
+        }
+
+        fetchCredentials();
+
+    }, [projectId, nodeData, isOpen, node])
+
     if (!node) return null
 
-    const renderProperty = (property, propertyKey) => {
+
+
+    console.log("CREDEN", credentials)
+
+    const renderCredentials = () => {
+        if (!nodeData?.data?.credentials || nodeData?.data?.credentials?.length === 0) {
+            return <p className="text-sm text-gray-500">No credentials required for this node.</p>
+        }
+
+        return (
+            <div className="space-y-4">
+                {nodeData?.data?.credentials?.map((credentialType) => {
+                    // Find actual credentials that match this type
+                    const availableCredentials = credentials.filter((cred) => cred.type === credentialType.name)
+                    const selectedCredential = nodeData.data?.selectedCredentials?.[credentialType.name] || ''
+                    console.log("nodeData.data",nodeData.data)
+
+                    return (
+                        <div key={credentialType.name} className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 block">
+                                Credential to connect with
+                            </label>
+                            <Select
+                                value={selectedCredential}
+                                onValueChange={(value) => {
+                                    if (value === "create-new") {
+                                        // Handle create new credential
+                                        console.log("Create new credential for", credentialType.name)
+                                        return
+                                    }
+                                    handleDataChange(`selectedCredentials.${credentialType.name}`, value)
+                                }}
+                            >
+                                <SelectTrigger className="w-full h-12 px-3 border border-gray-300 rounded-md">
+                                    <SelectValue placeholder={`${credentialType.displayName || credentialType.name} account`} />
+                                </SelectTrigger>
+                                <SelectContent className="w-full">
+                                    {availableCredentials.map((credential) => (
+                                        <SelectItem key={credential.id} value={credential.id} className="p-3">
+                                            <div className="flex items-center gap-3 w-full">
+                                                <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
+                                                    <span className="text-red-600 text-sm">📱</span>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="font-medium text-gray-900">{credential.name}</div>
+                                                    <div className="text-xs text-gray-500">{credentialType.displayName || credentialType.name}</div>
+                                                </div>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                    <div className="border-t my-1"></div>
+                                    <SelectItem value="create-new" className="p-3">
+                                        <div className="flex items-center gap-3 text-blue-600">
+                                            <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+                                                <span className="text-blue-600 text-sm">+</span>
+                                            </div>
+                                            <span className="font-medium">Create new credential</span>
+                                        </div>
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            {availableCredentials.length === 0 && (
+                                <p className="text-sm text-gray-500">
+                                    No {credentialType.displayName || credentialType.name} credentials configured.
+                                    <button className="text-blue-600 hover:underline ml-1">
+                                        Create one now
+                                    </button>
+                                </p>
+                            )}
+                        </div>
+                    )
+                })}
+            </div>
+        )
+    }
+
+    const renderProperty = (property) => {
         if (!property) return null
 
         const currentValue = workflowCtx.getSelectedNode()?.parameters[property?.name] || property.default || ''
@@ -215,12 +337,12 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigMod
                     {/* Right Panel - Configuration */}
                     <div className="flex-1 flex flex-col">
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-                            <TabsList className="grid w-full grid-cols-3 mx-6 mt-6 mb-0">
-                                <TabsTrigger value="parameters" className="flex items-center gap-2">
+                            <TabsList className="grid w-[50%] grid-cols-2 mx-6 mt-6 mb-0" >
+                                <TabsTrigger value="parameters" className="flex items-center gap-2" >
                                     <Settings className="w-4 h-4" />
                                     Parameters
                                 </TabsTrigger>
-                                <TabsTrigger value="settings">Settings</TabsTrigger>
+                                <TabsTrigger value="settings" disabled>Settings</TabsTrigger>
                             </TabsList>
 
                             {/* Scrollable Content Area */}
@@ -229,6 +351,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigMod
                                     <div className="h-full overflow-y-auto px-6 py-4">
                                         <div className="space-y-6">
                                             {/* Dynamic Properties */}
+                                            {renderCredentials()}
                                             {Object.keys(nodeData?.data?.properties || {}).length > 0 && (
                                                 <div>
                                                     <h4 className="font-semibold text-gray-900 mb-4">Configuration</h4>
@@ -242,7 +365,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeConfigMod
                                                                         {property.displayName}
                                                                         {property.required && <span className="text-red-500 ml-1">*</span>}
                                                                     </label>
-                                                                    {renderProperty(property, key)}
+                                                                    {renderProperty(property)}
                                                                     {property.description && (
                                                                         <p className="text-xs text-gray-500">{property.description}</p>
                                                                     )}

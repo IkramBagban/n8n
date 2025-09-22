@@ -19,7 +19,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     setWorkflow(prev => ({
       ...prev,
       nodes: [
-        ...prev.nodes, node
+        ...(Array.isArray(prev?.nodes) ? prev?.nodes : []), node
 
       ]
     }))

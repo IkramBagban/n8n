@@ -151,27 +151,30 @@ export default async function CredentialsPage() {
                                         <span className="text-2xl">{getCredentialIcon(credential.type)}</span>
                                         <div>
                                             <h3 className="font-medium text-gray-900">{credential.name}</h3>
-                                            <p className="text-sm text-gray-500">{getCredentialDisplayName(credential.type)}</p>
+                                            <div className="flex text-sm text-gray-500 gap-1">
+
+                                                <p className="">{getCredentialDisplayName(credential.type)}</p> |
+                                                <span className="">
+                                                    {formatDate(credential.updatedAt)}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4 text-sm text-gray-500">
                                     <span className="flex items-center gap-1">
-                                        <span>from</span>
                                         <Badge variant="outline" className="text-xs">
                                             {credential.projectName}
                                         </Badge>
                                     </span>
-                                    <Badge variant="secondary" className="text-xs">
+                                    {/* <Badge variant="secondary" className="text-xs">
                                         {getCredentialDisplayName(credential.type)}
-                                    </Badge>
-                                    <span className="flex items-center gap-1">
-                                        <Calendar className="w-4 h-4" />
-                                        {formatDate(credential.updatedAt)}
-                                    </span>
+                                    </Badge> */}
                                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                         <MoreHorizontal className="w-4 h-4" />
                                     </Button>
+
+
                                 </div>
                             </div>
                         ))}
@@ -187,18 +190,6 @@ export default async function CredentialsPage() {
                         </Button>
                     </div>
                 )}
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t">
-                <div className="text-sm text-gray-500">
-                    Total {credentials.length}
-                    <span className="ml-4 px-2 py-1 bg-red-50 text-red-600 rounded text-xs font-medium">
-                        {credentials.length}
-                    </span>
-                </div>
-                <div className="text-sm text-gray-500">
-                    50/page
-                </div>
             </div>
         </div>
     )
