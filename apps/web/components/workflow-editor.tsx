@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Background, Controls, MiniMap, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Switch } from '@/components/ui/switch';
@@ -28,6 +28,25 @@ import { Node } from '@/lib/types';
 import axios from 'axios';
 import { useWorkflowCtx } from '@/store/workflow/workflow-context';
 
+interface ExecutionMessage {
+    nodeId?: string;
+    nodeName?: string;
+    executionId: string;
+    workflowId?: string;
+    status: string;
+    message?: string;
+    nodeStatus?: 'executing' | 'success' | 'failed';
+    response?: unknown;
+}
+
+interface NodeExecutionState {
+    [nodeId: string]: {
+        status: 'idle' | 'executing' | 'success' | 'failed';
+        message?: string;
+        response?: unknown;
+    };
+}
+
 interface WorkflowEditorProps {
     workflowId?: string;
     projectId?: string;
@@ -54,13 +73,26 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [isNodeModalOpen, setIsNodeModalOpen] = useState(false);
-    const [messages, setMessages] = useState([]);
+    const [executionLogs, setExecutionLogs] = useState<ExecutionMessage[]>([]);
+    const [nodeExecutionStates, setNodeExecutionStates] = useState<NodeExecutionState>({});
+    const [isExecuting, setIsExecuting] = useState(false);
 
     const workflowCtx = useWorkflowCtx()
 
+    // Compute nodes with execution status
+    const nodesWithExecutionStatus = useMemo(() => {
+        return nodes.map(node => ({
+            ...node,
+            data: {
+                ...node.data,
+                executionStatus: nodeExecutionStates[node.id]?.status || 'idle'
+            }
+        }));
+    }, [nodes, nodeExecutionStates]);
+
 
     const handleNodeDoubleClick = (event: React.MouseEvent, node: Node) => {
-        console.log('messages', messages);
+        console.log('executionLogs', executionLogs);
         setSelectedNode(node);
         workflowCtx.setSelectedNodeId(node.id)
         setIsNodeModalOpen(true);
@@ -135,25 +167,48 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     };
 
     const handleExecuteWorkflow = async () => {
-        const payload = { workflowId, nodes, edges }
-        // const response = await axios.post("/api/rest/workflows/execute", payload)
-        // console.log("response", response)
+        // Reset execution states for clean start
+        setNodeExecutionStates({});
+        setExecutionLogs([]);
+        setIsExecuting(true);
 
         const eventSource = new EventSource("/api/rest/workflows/execute?workflowId=" + workflowId);
-
 
         eventSource.onopen = (event) => {
             console.log("Connection opened:", event);
         }
 
         eventSource.onmessage = (event) => {
-            const parsedData = JSON.parse(event.data);
+            const parsedData: ExecutionMessage = JSON.parse(event.data);
             console.log("Message received:", parsedData);
-            setMessages((currentMessages) => [...currentMessages, parsedData]);
+            
+            // Add to execution logs
+            setExecutionLogs((currentLogs) => [...currentLogs, parsedData]);
+            
+            // Update node execution states
+            if (parsedData.nodeId) {
+                setNodeExecutionStates((prevStates) => ({
+                    ...prevStates,
+                    [parsedData.nodeId!]: {
+                        status: parsedData.nodeStatus === 'executing' ? 'executing' :
+                               parsedData.nodeStatus === 'success' ? 'success' :
+                               parsedData.nodeStatus === 'failed' ? 'failed' : 'idle',
+                        message: parsedData.message,
+                        response: parsedData.response,
+                    }
+                }));
+            }
+            
+            // Check if workflow execution finished
+            if (parsedData.status === "Success" || parsedData.status === "Failed") {
+                setIsExecuting(false);
+                eventSource.close();
+            }
         }
 
         eventSource.onerror = (error) => {
             console.error("Error occurred:", error);
+            setIsExecuting(false);
             eventSource.close();
         }
     }
@@ -299,7 +354,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 <div className="flex-1">
                     <ReactFlow
                         onNodeDoubleClick={handleNodeDoubleClick}
-                        nodes={nodes}
+                        nodes={nodesWithExecutionStatus}
                         edges={edges}
                         nodeTypes={nodeTypes}
                         onNodesChange={onNodesChange}
@@ -314,7 +369,13 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 </div>
             </div>
             <div className='absolute bottom-10 left-30 w-[70%] flex justify-center items-center'>
-                <Button className='bg-red-500 hover:bg-red-600 cursor-pointer' onClick={handleExecuteWorkflow}>Execute Workflow</Button>
+                <Button 
+                    className='bg-red-500 hover:bg-red-600 cursor-pointer disabled:opacity-50' 
+                    onClick={handleExecuteWorkflow}
+                    disabled={isExecuting}
+                >
+                    {isExecuting ? 'Executing...' : 'Execute Workflow'}
+                </Button>
             </div>
 
             <WorkflowSidebar

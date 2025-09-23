@@ -3,7 +3,8 @@ import prismaClient from "@repo/db";
 import { NextRequest, NextResponse } from "next/server";
 import { ExecutionStatus } from "@prisma/client";
 
-
+const subscriber = redisClient.duplicate();
+await subscriber.connect();
 
 // previously i was thinking I'll run unsave workflows, but now i think i'll not do that atleast for now.
 export const GET = async (req: NextRequest) => {
@@ -55,7 +56,7 @@ export const GET = async (req: NextRequest) => {
             // const subscriber = await redisClient.duplicate();
             console.log("Subscriber created");
 
-            await redisClient.subscribe(`execution-${executionId}`, (message) => {
+            await subscriber.subscribe(`execution-${executionId}`, (message) => {
                 console.log("Received message:");
                 controller.enqueue(encoder.encode(`data: ${message}\n\n`))
 
@@ -65,8 +66,7 @@ export const GET = async (req: NextRequest) => {
 
                     req.signal.addEventListener("abort", async () => {
                         console.log("Request aborted by the client.")
-                        await redisClient.unsubscribe(`execution:${executionId}`);
-                        await redisClient.quit();
+                        await subscriber.unsubscribe(`execution:${executionId}`);
                         controller.close();
                     })
                 }
