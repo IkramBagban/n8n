@@ -107,3 +107,53 @@ model Credentials {
   project Project @relation(fields: [projectId], references: [id])
   Node    Node[]
 }
+
+// export type WorkflowExecuteMode =
+// 	| 'cli'
+// 	| 'error'
+// 	| 'integrated'
+// 	| 'internal'
+// 	| 'manual'
+// 	| 'retry'
+// 	| 'trigger'
+// 	| 'webhook'
+// 	| 'evaluation';
+
+enum ExecutionStatus {
+  Canceled
+  Crashed
+  Error
+  // New
+  Starting
+  Running
+  Success
+  // Unknown
+  // Waiting
+}
+
+model Execution {
+  id         String          @id @default(cuid())
+  workflowId String? // user can run an unsafe workflow
+  finished   Boolean         @default(false)
+  // mode       String  @default("manual") // i will see later if i need this or not, currently i don't need this.
+  status     ExecutionStatus @default(Starting)
+
+  createdAt DateTime  @default(now())
+  startedAt DateTime?
+  stoppedAt DateTime?
+
+  data Json? // in this i'll store the nodes, and edges and the other metadata at the time of execution.
+
+  @@index([workflowId])
+}
+
+// model ExecutionData {
+//   id          String   @id @default(cuid())
+//   workflowId  String
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+//   executionId String   @unique
+
+//   execution Execution @relation(fields: [executionId], references: [id])
+//   workflow  Workflow  @relation(fields: [workflowId], references: [id])
+// }

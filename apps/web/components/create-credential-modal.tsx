@@ -25,6 +25,7 @@ export function CreateCredentialModal({ isOpen, onClose, projectId = "cmfjrtqt40
     const [selectedCredential, setSelectedCredential] = useState<ICredentialType | null>(null)
     const [showConfigModal, setShowConfigModal] = useState(false)
 
+    console.log('availableCredentials', availableCredentials)
     const filteredCredentials = availableCredentials.filter(credential => credential.displayName.toLowerCase().includes(searchQuery.toLowerCase())
     )
 

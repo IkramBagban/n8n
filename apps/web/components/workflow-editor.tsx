@@ -54,11 +54,13 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [isNodeModalOpen, setIsNodeModalOpen] = useState(false);
+    const [messages, setMessages] = useState([]);
 
     const workflowCtx = useWorkflowCtx()
 
 
     const handleNodeDoubleClick = (event: React.MouseEvent, node: Node) => {
+        console.log('messages', messages);
         setSelectedNode(node);
         workflowCtx.setSelectedNodeId(node.id)
         setIsNodeModalOpen(true);
@@ -134,8 +136,26 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
     const handleExecuteWorkflow = async () => {
         const payload = { workflowId, nodes, edges }
-        const response = await axios.post("/api/rest/workflows/execute", payload)
-        console.log("response", response)
+        // const response = await axios.post("/api/rest/workflows/execute", payload)
+        // console.log("response", response)
+
+        const eventSource = new EventSource("/api/rest/workflows/execute?workflowId=" + workflowId);
+
+
+        eventSource.onopen = (event) => {
+            console.log("Connection opened:", event);
+        }
+
+        eventSource.onmessage = (event) => {
+            const parsedData = JSON.parse(event.data);
+            console.log("Message received:", parsedData);
+            setMessages((currentMessages) => [...currentMessages, parsedData]);
+        }
+
+        eventSource.onerror = (error) => {
+            console.error("Error occurred:", error);
+            eventSource.close();
+        }
     }
 
     const handleToggleActive = () => {
