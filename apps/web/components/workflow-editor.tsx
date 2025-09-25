@@ -17,7 +17,8 @@ import {
 import {
     User,
     Github,
-    Layers
+    Layers,
+    Plus
 } from 'lucide-react';
 import Link from 'next/link';
 import { useWorkflowEditor } from '@/hooks/useWorkflowEditor';
@@ -127,7 +128,15 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     };
 
     const handleNodeSelect = (nodeItem: NodeItem) => {
-        const nodeType = nodeItem.group?.includes('trigger') || nodeItem.category === 'triggers' || sidebarMode === 'triggers' ? 'trigger' : 'action';
+        // Determine node type based on group or category
+        let nodeType: string;
+        if (nodeItem.group?.includes('trigger') || nodeItem.category === 'triggers' || sidebarMode === 'triggers') {
+            nodeType = 'trigger';
+        } else if (nodeItem.group?.includes('model')) {
+            nodeType = 'model';
+        } else {
+            nodeType = 'action';
+        }
 
         const nodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         const newNode = {
@@ -181,24 +190,24 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         eventSource.onmessage = (event) => {
             const parsedData: ExecutionMessage = JSON.parse(event.data);
             console.log("Message received:", parsedData);
-            
+
             // Add to execution logs
             setExecutionLogs((currentLogs) => [...currentLogs, parsedData]);
-            
+
             // Update node execution states
             if (parsedData.nodeId) {
                 setNodeExecutionStates((prevStates) => ({
                     ...prevStates,
                     [parsedData.nodeId!]: {
                         status: parsedData.nodeStatus === 'executing' ? 'executing' :
-                               parsedData.nodeStatus === 'success' ? 'success' :
-                               parsedData.nodeStatus === 'failed' ? 'failed' : 'idle',
+                            parsedData.nodeStatus === 'success' ? 'success' :
+                                parsedData.nodeStatus === 'failed' ? 'failed' : 'idle',
                         message: parsedData.message,
                         response: parsedData.response,
                     }
                 }));
             }
-            
+
             // Check if workflow execution finished
             if (parsedData.status === "Success" || parsedData.status === "Failed") {
                 setIsExecuting(false);
@@ -253,6 +262,10 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     return (
         <div className="flex h-full">
 
+        <div className="w-13 h-13 absolute right-10 top-30 border border-black bg-white flex flex-col items-center py-4 space-y-4 shadow-lg hover:shadow-xl cursor-pointer z-10" onClick={handleAddNode}>
+            <Plus className="w-6 h-6 text-gray-600"/>
+        </div>
+
             <div className="flex-1 flex flex-col" style={{ width: '100%', height: '100%' }}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
                     <div className="flex items-center gap-4">
@@ -282,10 +295,6 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                                 </BreadcrumbList>
                             </Breadcrumb>
                         )}
-
-                        <Button variant="outline" size="sm" onClick={handleAddNode}>
-                            + Add Node
-                        </Button>
 
                         {workflowData?.tags && workflowData.tags.length > 0 && (
                             <div className="flex gap-2">
@@ -369,8 +378,8 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 </div>
             </div>
             <div className='absolute bottom-10 left-30 w-[70%] flex justify-center items-center'>
-                <Button 
-                    className='bg-red-500 hover:bg-red-600 cursor-pointer disabled:opacity-50' 
+                <Button
+                    className='bg-red-500 hover:bg-red-600 cursor-pointer disabled:opacity-50'
                     onClick={handleExecuteWorkflow}
                     disabled={isExecuting}
                 >
