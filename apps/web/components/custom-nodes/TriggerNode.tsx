@@ -18,16 +18,16 @@ export function TriggerNode({ data }: TriggerNodeProps) {
   const executionStatus = data.executionStatus || 'idle';
   
   return (
-    <div className="trigger-node relative flex justify-center items-center border border-gray-300 rounded-l-3xl bg-white shadow-sm w-10 h-10">
+    <div className="trigger-node relative flex justify-center items-center border border-black/50  rounded-l-3xl bg-white shadow-sm w-12 h-12">
       <Zap className="w-5 h-5" />
       
       {executionStatus !== 'idle' && (
         <div className="absolute -top-2 -right-2 z-10">
           <NodeExecutionIndicator status={executionStatus} size="sm" />
         </div>
-      )}
+      )}  
       
-      <div className="absolute -bottom-3 left-0 h-3 rounded-full border border-white text-[.5rem] w-[10rem] border border-gray-300">
+      <div className="absolute -bottom-3 left-1 h-3 rounded-full  border-white text-[.5rem] w-[10rem]">
         {data?.label[0]?.toUpperCase() + data?.label.slice(1)}
       </div>
       <Handle type="source" position={Position.Right} />
