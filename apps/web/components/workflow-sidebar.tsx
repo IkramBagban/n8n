@@ -53,6 +53,7 @@ export function WorkflowSidebar({
 
 
     const [availableTriggerNodes, setAvailableTriggerNodes] = React.useState<NodeItem[]>([]);
+    const [availableActionNodes, setAvailableActionNodes] = React.useState<NodeItem[]>([]);
 
     React.useEffect(() => {
         const getTriggerNodes = async () => {
@@ -64,9 +65,26 @@ export function WorkflowSidebar({
             }
         };
 
+        const getActionNodes = async () => {
+            try {
+                const response = await axios.get('/api/rest/available-actions');
+                setAvailableActionNodes(response.data);
+            } catch (error) {
+                console.log('Error fetching action nodes:', error);
+            }
+        };
+
         getTriggerNodes();
+        getActionNodes();
     }, []);
+
+    console.log("fetched nodes", { availableTriggerNodes, availableActionNodes })
     const filteredTriggers = availableTriggerNodes.filter(node =>
+        node.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        node.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const filteredActions = availableActionNodes.filter(node =>
         node.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         node.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -113,41 +131,80 @@ export function WorkflowSidebar({
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-4 space-y-3">
                         <p className="text-sm text-gray-600 mb-4">
-                            A trigger is a step that starts your workflow
+                            {mode === 'triggers'
+                                ? 'A trigger is a step that starts your workflow'
+                                : 'Actions are the steps that happen after your workflow starts'
+                            }
                         </p>
-                        {filteredTriggers?.map((trigger) => (
-                            <div
-                                key={Date.now() + Math.random()}
-                                className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 cursor-pointer transition-colors"
-                                onClick={() => onNodeSelect(trigger)}
-                            >
-                                <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                    <Zap className="w-5 h-5" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-medium text-gray-900 text-sm">{trigger.displayName || trigger.name}</h3>
-                                    <p className="text-xs text-gray-600 mt-1">{trigger.description}</p>
-                                </div>
-                                <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                            </div>
-                        ))}
+                        {mode === 'triggers' ? (
+                            <>
+                                {filteredTriggers?.map((trigger) => (
+                                    <div
+                                        key={Date.now() + Math.random()}
+                                        className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 cursor-pointer transition-colors"
+                                        onClick={() => onNodeSelect(trigger)}
+                                    >
+                                        <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                            <Zap className="w-5 h-5" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-medium text-gray-900 text-sm">{trigger.displayName || trigger.name}</h3>
+                                            <p className="text-xs text-gray-600 mt-1">{trigger.description}</p>
+                                        </div>
+                                        <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    </div>
+                                ))}
+                            </>
+                        ) : (
+                            <>
+                                {filteredActions?.map((action) => (
+                                    <div
+                                        key={Date.now() + Math.random()}
+                                        className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 cursor-pointer transition-colors"
+                                        onClick={() => onNodeSelect(action)}
+                                    >
+                                        <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                            {action.name === 'agent' ? (
+                                                <span className="text-lg">🤖</span>
+                                            ) : action.group?.includes('model') || action.name.includes('lmChat') ? (
+                                                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                                    <span className="text-white text-xs font-bold">M</span>
+                                                </div>
+                                            ) : (
+                                                <Zap className="w-5 h-5" />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-medium text-gray-900 text-sm">{action.displayName || action.name}</h3>
+                                            <p className="text-xs text-gray-600 mt-1">{action.description}</p>
+                                        </div>
+                                        <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    </div>
+                                ))}
+                            </>
+                        )}
 
-                        <div className="mt-6 pt-4 border-t border-gray-200">
+                        {/* <div className="mt-6 pt-4 border-t border-gray-200">
                             <div
                                 className="flex items-center gap-3 p-3 border border-dashed border-gray-300 rounded-lg hover:border-red-300 hover:bg-red-50 cursor-pointer transition-colors"
-                                onClick={() => onModeChange('triggers')}
+                                onClick={() => onModeChange(mode === 'triggers' ? 'actions' : 'triggers')}
                             >
                                 <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                                     <Plus className="w-5 h-5 text-gray-600" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-medium text-gray-900 text-sm">Add another trigger</h3>
+                                    <h3 className="font-medium text-gray-900 text-sm">
+                                        {mode === 'triggers' ? 'Add another trigger' : 'Add another action'}
+                                    </h3>
                                     <p className="text-xs text-gray-600 mt-1">
-                                        Triggers start your workflow. Workflows can have multiple triggers.
+                                        {mode === 'triggers' 
+                                            ? 'Triggers start your workflow. Workflows can have multiple triggers.'
+                                            : 'Actions perform tasks in your workflow. Chain multiple actions together.'
+                                        }
                                     </p>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>
