@@ -158,7 +158,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent
-                className="!max-w-none !w-[60vw] !h-[90vh] p-0 overflow-hidden flex flex-col"
+                className="!max-w-none !w-[35vw] !h-[90vh] p-0 overflow-hidden flex flex-col"
                 showCloseButton={false}
             >
                 <DialogHeader className="flex flex-row items-center justify-between p-6 border-b bg-white flex-shrink-0">
@@ -359,11 +359,11 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                     </div>
                 </div>
 
-                <div className="border-t p-6 bg-gray-50 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span className="text-yellow-600">💡</span>
-                        <span>Tip: Use the test button to validate your webhook configuration</span>
-                    </div>
+                <div className="border-t p-6 bg-gray-50 flex items-center justify-end">
+                    {/* <div className="flex items-center gap-2 text-sm text-gray-600"> */}
+                        {/* <span className="text-yellow-600">💡</span>
+                        <span>Tip: Use the test button to validate your webhook configuration</span> */}
+                    {/* </div> */}
                     <div className="flex items-center gap-3">
                         <Button variant="outline" onClick={onClose}>
                             Cancel
