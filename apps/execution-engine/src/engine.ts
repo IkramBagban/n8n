@@ -103,6 +103,18 @@ export class Engine {
           parameters: currentNode.parameters,
           credentialId: currentNode.credentialId,
         });
+        console.log("Response from telegram node:", response);
+
+
+        if (!response.success) {
+          await publishDataToPubSub({
+            ...commonPayload, 
+            status: "Failed",
+            response,
+            nodeStatus: NodeStatus.failed,
+          });
+          return;
+        }
 
         // i have to add check here, if the workflow message is sent successfully or not.
         // if the message is not sent successfully then i have to stop the workflow execution and update the execution status to failed.

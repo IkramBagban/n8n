@@ -74,10 +74,10 @@ export class Telegram implements INodeType {
         type: "options",
         noDataExpression: true,
         options: [
-          {
-            name: "Chat",
-            value: "chat",
-          },
+          // {
+          //   name: "Chat",
+          //   value: "chat",
+          // },
           // {
           //   name: "Callback",
           //   value: "callback",
@@ -105,18 +105,18 @@ export class Telegram implements INodeType {
         //   },
         // },
         options: [
-          {
-            name: "Delete Chat Message",
-            value: "deleteMessage",
-            description: "Delete a chat message",
-            action: "Delete a chat message",
-          },
-          {
-            name: "Send Media Group",
-            value: "sendMediaGroup",
-            description: "Send group of photos or videos to album",
-            action: "Send a media group message",
-          },
+          // {
+          //   name: "Delete Chat Message",
+          //   value: "deleteMessage",
+          //   description: "Delete a chat message",
+          //   action: "Delete a chat message",
+          // },
+          // {
+          //   name: "Send Media Group",
+          //   value: "sendMediaGroup",
+          //   description: "Send group of photos or videos to album",
+          //   action: "Send a media group message",
+          // },
           {
             name: "Send Message",
             value: "sendMessage",
@@ -156,14 +156,22 @@ export class Telegram implements INodeType {
     ],
   };
 
-  async execute({ parameters, credentialId }: any) {
+  async execute({
+    parameters,
+    credentialId,
+  }: any): Promise<{ success: boolean; data?: any; error?: string }> {
     console.log("params -------> ", { parameters, credentialId });
     if (!parameters) {
-      return console.error("parameters are not provided");
+      console.error("parameters are not provided");
+      return { success: false, error: "parameters are not provided" };
     }
 
     if (!credentialId) {
-      return console.error("credentialId is not provided");
+      console.error("credentialId is not provided");
+      return {
+        success: false,
+        error: "credential is not provided",
+      };
     }
 
     const credential = await prismaClient.credentials.findFirst({
@@ -175,7 +183,10 @@ export class Telegram implements INodeType {
     const url = `https://api.telegram.org/bot${credential?.data?.accessToken}/sendMessage?chat_id=${parameters?.chatId}&text=${parameters.text}`;
     const response = await fetch(url);
     const data = await response.json();
+    if (!data?.ok) {
+      return { success: false, error: "Bad Request" };
+    }
     console.log(JSON.stringify(data, null, 2));
-    return data;
+    return { success: true, data };
   }
 }
