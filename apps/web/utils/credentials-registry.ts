@@ -1,6 +1,7 @@
 import { TelegramApi } from "../../../packages/nodes-base/utils/credentials/TelegramApi.credentials";
 import { GmailOAuth2Api } from "../../../packages/nodes-base/utils/credentials/GmailOAuth2Api.credentials";
 import { ResendApi } from "../../../packages/nodes-base/utils/credentials/ResendApi.credentials";
+import { GoogleGeminiApi } from "../../../packages/nodes-base/utils/credentials/GoogleGeminiApi.credentials";
 import type {
   ICredentialType,
   INodeProperties,
@@ -21,6 +22,7 @@ export const availableCredentialsObj: Record<string, ICredentialType> = {
   telegramApi: new TelegramApi(),
   gmailOAuth2Api: new GmailOAuth2Api(),
   resendApi: new ResendApi(),
+  googleGeminiApi: new GoogleGeminiApi(),
 };
 
 export function getCredentialByType(
