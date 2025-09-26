@@ -132,6 +132,8 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         let nodeType: string;
         if (nodeItem.group?.includes('trigger') || nodeItem.category === 'triggers' || sidebarMode === 'triggers') {
             nodeType = 'trigger';
+        } else if (nodeItem.group?.includes('ai') || nodeItem.name === 'agent') {
+            nodeType = 'agent';
         } else if (nodeItem.group?.includes('model')) {
             nodeType = 'model';
         } else {
@@ -141,7 +143,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         const nodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         const newNode = {
             id: nodeId,
-            position: { x: 0, y: 0 },
+            position: { x: Math.random() * 20, y: Math.random() * 5 },
             name: nodeItem.name,
             description: nodeItem.description,
             type: nodeType,
@@ -262,7 +264,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     return (
         <div className="flex h-full">
 
-        <div className="w-13 h-13 absolute right-10 top-30 border border-black bg-white flex flex-col items-center py-4 space-y-4 shadow-lg hover:shadow-xl cursor-pointer z-10" onClick={handleAddNode}>
+        <div className="w-13 h-13 absolute right-10 top-30 border border-black bg-white flex flex-col items-center py-4 space-y-4 rounded-md shadow-lg hover:shadow-xl cursor-pointer z-10" onClick={handleAddNode}>
             <Plus className="w-6 h-6 text-gray-600"/>
         </div>
 
