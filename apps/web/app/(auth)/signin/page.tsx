@@ -60,7 +60,7 @@ export default function SignInPage() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
-            <Link href="/auth/signup" className="font-medium text-red-600 hover:text-red-500">
+            <Link href="/signup" className="font-medium text-red-600 hover:text-red-500">
               create a new account
             </Link>
           </p>
@@ -138,11 +138,12 @@ export default function SignInPage() {
               </label>
             </div>
 
-            <div className="text-sm">
-              <Link href="/auth/forgot-password" className="font-medium text-red-600 hover:text-red-500">
+            {/* TODO: Implement forgot password functionality */}
+            {/* <div className="text-sm">
+              <Link href="/forgot-password" className="font-medium text-red-600 hover:text-red-500">
                 Forgot your password?
               </Link>
-            </div>
+            </div> */}
           </div>
 
           <div>

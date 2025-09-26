@@ -51,7 +51,7 @@ export default function SignUpPage() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
-            <Link href="/auth/signin" className="font-medium text-red-600 hover:text-red-500">
+            <Link href="/signin" className="font-medium text-red-600 hover:text-red-500">
               sign in to your existing account
             </Link>
           </p>
