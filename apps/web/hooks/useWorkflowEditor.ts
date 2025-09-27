@@ -59,7 +59,36 @@ export const useWorkflowEditor = ({
   );
 
   const onConnect: OnConnect = useCallback(
-    (params) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
+    (params) => {
+      console.log('Connection attempt:', params);
+      
+      setEdges((edgesSnapshot) => {
+        // For bottom handle connections (agent to model/tool/memory), ensure single connection per handle
+        if (params.sourceHandle && ['chat-model', 'memory', 'tool'].includes(params.sourceHandle)) {
+          console.log('Agent bottom handle connection:', params.sourceHandle);
+          // Remove any existing connections from this specific handle
+          const filteredEdges = edgesSnapshot.filter(
+            edge => !(edge.source === params.source && edge.sourceHandle === params.sourceHandle)
+          );
+          console.log('Filtered edges for agent handle:', filteredEdges.length, 'remaining');
+          return addEdge(params, filteredEdges);
+        }
+        
+        // For model nodes connecting to agents, ensure the model only connects to one agent
+        if (params.targetHandle && ['chat-model', 'memory', 'tool'].includes(params.targetHandle)) {
+          console.log('Model to agent connection:', params.targetHandle);
+          // Remove any existing connections from this model node
+          const filteredEdges = edgesSnapshot.filter(
+            edge => edge.source !== params.source
+          );
+          console.log('Filtered edges for model:', filteredEdges.length, 'remaining');
+          return addEdge(params, filteredEdges);
+        }
+        
+        console.log('Standard connection, no filtering applied');
+        return addEdge(params, edgesSnapshot);
+      });
+    },
     []
   );
 
@@ -96,6 +125,7 @@ export const useWorkflowEditor = ({
 
       setWorkflowData(data);
       setNodes(data.nodes || []);
+      console.log('Loading edges:', data.edges);
       setEdges(data.edges || []);
       workflowCtx.addWorkflow(data);
     } catch (err) {
@@ -109,7 +139,7 @@ export const useWorkflowEditor = ({
   const saveWorkflow = useCallback(async () => {
     if (!workflowData && !isNewWorkflow) return;
 
-    setIsLoading(true);
+    // setIsLoading(true);
     setError(null);
 
     try {

@@ -35,7 +35,7 @@ export class Agent implements INodeType {
     try {
       console.log("Executing AI Agent with parameters:", parameters);
 
-      const { prompt } = parameters.parameters;
+      const { prompt } = parameters;
 
       console.log("Agent received prompt:", prompt);
       if (!prompt.trim()) {

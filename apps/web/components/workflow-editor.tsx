@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Background, Controls, MiniMap, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Switch } from '@/components/ui/switch';
@@ -92,6 +92,39 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     }, [nodes, nodeExecutionStates]);
 
 
+    const isValidConnection = useCallback((connection: { source: string; target: string; sourceHandle?: string; targetHandle?: string }) => {
+        const sourceNode = nodes.find(node => node.id === connection.source);
+        const targetNode = nodes.find(node => node.id === connection.target);
+        
+        if (!sourceNode || !targetNode) return false;
+        
+        // Agent to Model connections (bottom handles)
+        if (sourceNode.type === 'agent' && connection.sourceHandle) {
+            if (['chat-model', 'memory', 'tool'].includes(connection.sourceHandle)) {
+                // Must connect to appropriate node type
+                if (connection.sourceHandle === 'chat-model' && targetNode.type !== 'model') {
+                    return false;
+                }
+                // Only allow one connection per handle
+                const existingConnection = edges.find(
+                    edge => edge.source === connection.source && edge.sourceHandle === connection.sourceHandle
+                );
+                if (existingConnection) return false;
+            }
+        }
+        
+        // Model to Agent connections (top handle to bottom handle)
+        if (targetNode.type === 'agent' && connection.targetHandle) {
+            if (['chat-model', 'memory', 'tool'].includes(connection.targetHandle)) {
+                // Model should only connect to one agent
+                const existingConnection = edges.find(edge => edge.source === connection.source);
+                if (existingConnection) return false;
+            }
+        }
+        
+        return true;
+    }, [nodes, edges]);
+
     const handleNodeDoubleClick = (event: React.MouseEvent, node: Node) => {
         console.log('executionLogs', executionLogs);
         setSelectedNode(node);
@@ -178,6 +211,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     };
 
     const handleExecuteWorkflow = async () => {
+       await handleSave()
         // Reset execution states for clean start
         setNodeExecutionStates({});
         setExecutionLogs([]);
@@ -371,6 +405,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                         onNodesChange={onNodesChange}
                         onEdgesChange={onEdgesChange}
                         onConnect={onConnect}
+                        isValidConnection={isValidConnection}
                         fitView
                     >
                         <Background />

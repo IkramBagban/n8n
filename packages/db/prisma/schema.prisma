@@ -79,12 +79,14 @@ model Node {
 }
 
 model Edge {
-  id         String   @id @default(uuid())
-  source     String
-  target     String
-  workflowId String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String   @id @default(uuid())
+  source       String
+  target       String
+  sourceHandle String?
+  targetHandle String?
+  workflowId   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   workflow   Workflow @relation(fields: [workflowId], references: [id])
   sourceNode Node     @relation("SourceNode", fields: [source], references: [id])

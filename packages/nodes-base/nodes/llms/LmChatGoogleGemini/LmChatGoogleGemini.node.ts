@@ -138,7 +138,7 @@ export class LmChatGoogleGemini implements INodeType {
       console.log("Supplying Google Gemini model with parameters:", parameters);
 
       const {
-        modelName = "gemini-1.5-flash",
+        modelName = "gemini-2.5-flash",
         temperature = 0.1,
         maxOutputTokens = 1000,
       } = parameters;
