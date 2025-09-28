@@ -6,11 +6,17 @@ import type {
 import prismaClient from "@repo/db";
 import { ResendEmailService } from "./resend";
 
+const resendIconUrl =
+  "https://img.icons8.com/?size=100&id=nyD0PULzXd9Q&format=png&color=000000";
 export class Resend implements INodeType {
   description: INodeTypeDescription = {
     displayName: "Resend",
     name: "resend",
-    icon: "file:resend.svg",
+    icon: {
+      type: "url",
+      value: resendIconUrl,
+      color: "green",
+    },
     group: ["output"],
     version: [1, 1.1, 1.2],
     subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',

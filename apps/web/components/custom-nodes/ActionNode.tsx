@@ -1,12 +1,15 @@
 "use client"
 
 import { Handle, Position } from "@xyflow/react";
-import { Send } from "lucide-react";
 import { NodeExecutionIndicator } from "@/components/ui/node-spinner";
+import { NodeIcon, INodeIcon } from "@/components/ui/node-icon";
+import { getNodeIcon } from "@/utils/node-registry";
 
 interface ActionNodeData {
     label: string;
     executionStatus?: 'idle' | 'executing' | 'success' | 'failed';
+    nodeType?: string;
+    properties?: Record<string, unknown>;
     [key: string]: unknown;
 }
 
@@ -17,9 +20,36 @@ interface ActionNodeProps {
 export function ActionNode({ data }: ActionNodeProps) {
     const executionStatus = data.executionStatus || 'idle';
     
+    console.log('ActionNode data:', data);
+    
+    const getActionNodeIcon = (): string | INodeIcon => {
+        console.log('ActionNode nodeType:', data.nodeType);
+        
+        if (data.nodeType) {
+            const registryIcon = getNodeIcon(data.nodeType);
+            console.log('ActionNode registryIcon for', data.nodeType, ':', registryIcon);
+            if (registryIcon) return registryIcon;
+        }
+        
+        switch (data.nodeType) {
+            case 'telegram':
+                return { type: 'file' as const, value: 'telegram.svg' };
+            case 'resend':
+                return { type: 'url' as const, value: 'https://img.icons8.com/?size=100&id=nyD0PULzXd9Q&format=png&color=000000' };
+            case 'agent':
+                return { type: 'lucide' as const, value: 'Bot', color: 'purple' };
+            default:
+                return { type: 'lucide' as const, value: 'Zap', color: 'blue' };
+        }
+    };
+
     return (
         <div className="action-node relative flex justify-center items-center border border-black/50 rounded-lg bg-white shadow-sm w-12 h-12">
-            <Send className="w-5 h-5 text-blue-600" />
+            <NodeIcon 
+                icon={getActionNodeIcon()} 
+                size="md" 
+                className="text-current"
+            />
             
             {executionStatus !== 'idle' && (
                 <div className="absolute -top-2 -right-2 z-10">

@@ -1,14 +1,16 @@
 "use client";
 
 import { Handle, Position } from "@xyflow/react";
-import { Bot, Plus, Zap } from "lucide-react";
 import { NodeExecutionIndicator } from "@/components/ui/node-spinner";
+import { NodeIcon, INodeIcon } from "@/components/ui/node-icon";
+import { getNodeIcon } from "@/utils/node-registry";
 
 interface AgentNodeData {
     label: string;
     executionStatus?: "idle" | "executing" | "success" | "failed";
     isSelected?: boolean;
     itemCount?: number;
+    nodeType?: string;
 }
 
 interface AgentNodeProps {
@@ -20,11 +22,25 @@ export function AgentNode({ data }: AgentNodeProps) {
     const executionStatus = data.executionStatus || "idle";
     const isSelected = data.isSelected || false;
 
+    const getAgentNodeIcon = (): string | INodeIcon => {
+        if (data.nodeType) {
+            const registryIcon = getNodeIcon(data.nodeType);
+            if (registryIcon) return registryIcon;
+        }
+        
+        // Default Agent icon
+        return { type: 'lucide' as const, value: 'Bot', color: 'purple' };
+    };
+
     return (
         <div className={`agent-node relative flex justify-center items-center border-1 rounded-md bg-white shadow-sm w-35 h-12 ${isSelected ? 'border-green-400' : 'border-black/50'
             }`}>
             <div className="flex items-center gap-2">
-                <Bot className="w-5 h-5" />
+                <NodeIcon 
+                    icon={getAgentNodeIcon()} 
+                    size="md" 
+                    className="text-current"
+                />
                 <span className="font-medium">AI Agent</span>
             </div>
 

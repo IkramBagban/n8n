@@ -19,8 +19,8 @@ export class LmChatGoogleGemini implements INodeType {
 
     name: "lmChatGoogleGemini",
     icon: {
-      type: "component",
-      component: Icon,
+      type: "file",
+      value: "google.svg"
     },
     group: ["transform", "model"],
     nodeType: "chat-model", // it is not addded in the type yet

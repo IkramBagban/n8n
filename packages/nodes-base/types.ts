@@ -24,10 +24,16 @@ export type ThemeIconColor =
   | "purple"
   | "crimson";
 
+export interface INodeIcon {
+  type: 'font-awesome' | 'lucide' | 'file' | 'url' | 'svg';
+  value: string;
+  color?: ThemeIconColor;
+}
+
 export interface INodeTypeBaseDescription {
   displayName: string;
   name: string;
-  icon?: string;
+  icon?: string | INodeIcon; // Support both legacy string format and new object format
   iconColor?: ThemeIconColor;
   iconUrl?: string;
   badgeIconUrl?: string;

@@ -6,6 +6,7 @@ export const GET = async () => {
     .map((key) => {
       const nodeType = predefinedNodesTypes[key].type;
       return {
+        id: nodeType.description.name, // This will be used as nodeType in the workflow editor
         name: nodeType.description.name,
         displayName: nodeType.description.displayName,
         description: nodeType.description.description,

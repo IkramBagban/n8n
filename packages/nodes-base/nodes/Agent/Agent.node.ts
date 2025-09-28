@@ -4,8 +4,11 @@ export class Agent implements INodeType {
   description: INodeTypeDescription = {
     displayName: "AI Agent",
     name: "agent",
-    icon: "fa:robot",
-    iconColor: "black",
+    icon: {
+      type: "lucide",
+      value: "Bot",
+      color: "black"
+    },
     group: ["transform"],
     version: [1, 1.1, 1.2],
     defaults: {
@@ -31,7 +34,7 @@ export class Agent implements INodeType {
     credentials: [],
   };
 
-  async execute(parameters: any) {
+  async execute({ parameters }: any) {
     try {
       console.log("Executing AI Agent with parameters:", parameters);
 

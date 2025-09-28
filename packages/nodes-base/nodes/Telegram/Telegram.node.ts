@@ -48,7 +48,10 @@ export class Telegram implements INodeType {
   description: INodeTypeDescription = {
     displayName: "Telegram",
     name: "telegram",
-    icon: "file:telegram.svg",
+    icon: {
+      type: "file",
+      value: "telegram.svg"
+    },
     group: ["output"],
     version: [1, 1.1, 1.2],
     subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
