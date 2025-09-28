@@ -6,6 +6,7 @@ import '@xyflow/react/dist/style.css';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import toast from 'react-hot-toast';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -95,33 +96,43 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     const isValidConnection = useCallback((connection: { source: string; target: string; sourceHandle?: string; targetHandle?: string }) => {
         const sourceNode = nodes.find(node => node.id === connection.source);
         const targetNode = nodes.find(node => node.id === connection.target);
-        
-        if (!sourceNode || !targetNode) return false;
-        
+
+        if (!sourceNode || !targetNode) {
+            toast.error('Invalid connection: Source or target node not found');
+            return false;
+        }
+
         // Agent to Model connections (bottom handles)
         if (sourceNode.type === 'agent' && connection.sourceHandle) {
             if (['chat-model', 'memory', 'tool'].includes(connection.sourceHandle)) {
                 // Must connect to appropriate node type
                 if (connection.sourceHandle === 'chat-model' && targetNode.type !== 'model') {
+                    toast.error('Chat Model handle can only connect to Model nodes');
                     return false;
                 }
                 // Only allow one connection per handle
                 const existingConnection = edges.find(
                     edge => edge.source === connection.source && edge.sourceHandle === connection.sourceHandle
                 );
-                if (existingConnection) return false;
+                if (existingConnection) {
+                    toast.error(`This ${connection.sourceHandle} handle already has a connection`);
+                    return false;
+                }
             }
         }
-        
+
         // Model to Agent connections (top handle to bottom handle)
         if (targetNode.type === 'agent' && connection.targetHandle) {
             if (['chat-model', 'memory', 'tool'].includes(connection.targetHandle)) {
                 // Model should only connect to one agent
                 const existingConnection = edges.find(edge => edge.source === connection.source);
-                if (existingConnection) return false;
+                if (existingConnection) {
+                    toast.error('This model node can only connect to one agent');
+                    return false;
+                }
             }
         }
-        
+
         return true;
     }, [nodes, edges]);
 
@@ -140,14 +151,18 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
     const handleNodeSave = (updatedNode: Node) => {
         setNodes((currentNodes) => {
-
             const updatedNodes = currentNodes.map((node) =>
                 node.id === updatedNode.id ? updatedNode : node
             )
 
+            workflowCtx.setNodes(updatedNodes);
 
-            workflowCtx.setNodes(updatedNodes)
-            return updatedNodes
+            // Show success toast for node configuration save
+            toast.success(`Node "${updatedNode.data.label || updatedNode.name}" configuration saved!`, {
+                duration: 3000,
+            });
+
+            return updatedNodes;
         });
     };
 
@@ -190,8 +205,8 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
             },
         };
 
-        console.log("new node", newNode)
-        workflowCtx.addNode(newNode)
+        console.log("new node", newNode);
+        workflowCtx.addNode(newNode);
 
         setNodes((currentNodes) => [...currentNodes, newNode]);
         setIsSidebarOpen(false);
@@ -199,28 +214,41 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
     const handleSave = async () => {
         setIsSaving(true);
+        const toastId = toast.loading('Saving workflow...');    
+
         try {
             await saveWorkflow();
-            alert('Workflow saved successfully!');
+            toast.success('Workflow saved successfully!', {
+                id: toastId,
+            });
         } catch (error) {
             console.error("Error saving workflow:", error);
-            alert('Error saving workflow. Please try again.');
+            toast.error('Error saving workflow. Please try again.', {
+                id: toastId,
+            });
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleExecuteWorkflow = async () => {
-       await handleSave()
-        // Reset execution states for clean start
+
         setNodeExecutionStates({});
         setExecutionLogs([]);
         setIsExecuting(true);
+
+        toast.loading('Starting workflow execution...', {
+            id: 'workflow-execution',
+            duration: 2000,
+        });
 
         const eventSource = new EventSource("/api/rest/workflows/execute?workflowId=" + workflowId);
 
         eventSource.onopen = (event) => {
             console.log("Connection opened:", event);
+            toast.success('Workflow execution started', {
+                id: 'workflow-execution',
+            });
         }
 
         eventSource.onmessage = (event) => {
@@ -242,12 +270,65 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                         response: parsedData.response,
                     }
                 }));
+
+                // Show toast for node failures
+                if (parsedData.nodeStatus === 'failed') {
+                    let errorMessage = 'Unknown error';
+
+                    // Extract error message from various possible locations
+                    if (parsedData.message) {
+                        errorMessage = parsedData.message;
+                    } else if (parsedData.response?.error) {
+                        errorMessage = typeof parsedData.response.error === 'string'
+                            ? parsedData.response.error
+                            : JSON.stringify(parsedData.response.error);
+                    } else if (parsedData.response?.message) {
+                        errorMessage = parsedData.response.message;
+                    }
+
+                    toast.error(
+                        `❌ Node "${parsedData.nodeName || parsedData.nodeId}" failed:\n${errorMessage}`,
+                        {
+                            duration: 8000,
+                            style: {
+                                maxWidth: '500px',
+                                whiteSpace: 'pre-line',
+                            },
+                        }
+                    );
+                }
             }
 
             // Check if workflow execution finished
-            if (parsedData.status === "Success" || parsedData.status === "Failed") {
+            if (parsedData.status === "Success") {
                 setIsExecuting(false);
                 eventSource.close();
+                toast.success('Workflow executed successfully! ✅', {
+                    duration: 4000,
+                });
+            } else if (parsedData.status === "Failed") {
+                setIsExecuting(false);
+                eventSource.close();
+
+                let errorMessage = 'Unknown error occurred';
+                if (parsedData.message) {
+                    errorMessage = parsedData.message;
+                } else if (parsedData.response?.error) {
+                    errorMessage = typeof parsedData.response.error === 'string'
+                        ? parsedData.response.error
+                        : JSON.stringify(parsedData.response.error);
+                }
+
+                toast.error(
+                    `🚫 Workflow execution failed:\n${errorMessage}`,
+                    {
+                        duration: 8000,
+                        style: {
+                            maxWidth: '500px',
+                            whiteSpace: 'pre-line',
+                        },
+                    }
+                );
             }
         }
 
@@ -255,6 +336,9 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
             console.error("Error occurred:", error);
             setIsExecuting(false);
             eventSource.close();
+            toast.error('Workflow execution failed due to connection error', {
+                duration: 5000,
+            });
         }
     }
 
@@ -298,9 +382,9 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     return (
         <div className="flex h-full">
 
-        <div className="w-13 h-13 absolute right-10 top-30 border border-black bg-white flex flex-col items-center py-4 space-y-4 rounded-md shadow-lg hover:shadow-xl cursor-pointer z-10" onClick={handleAddNode}>
-            <Plus className="w-6 h-6 text-gray-600"/>
-        </div>
+            <div className="w-13 h-13 absolute right-10 top-30 border border-black bg-white flex flex-col items-center py-4 space-y-4 rounded-md shadow-lg hover:shadow-xl cursor-pointer z-10" onClick={handleAddNode}>
+                <Plus className="w-6 h-6 text-gray-600" />
+            </div>
 
             <div className="flex-1 flex flex-col" style={{ width: '100%', height: '100%' }}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
@@ -396,7 +480,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                     </div>
                 </div>
 
-                <div className="flex-1">
+                <div className="flex-1 relative">
                     <ReactFlow
                         onNodeDoubleClick={handleNodeDoubleClick}
                         nodes={nodesWithExecutionStatus}
@@ -412,16 +496,18 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                         <Controls />
                         <MiniMap />
                     </ReactFlow>
+                
+                    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-1">
+                        <Button
+                            className="bg-red-500 hover:bg-red-600 cursor-pointer disabled:opacity-50 px-6 py-2"
+                            onClick={handleExecuteWorkflow}
+                            disabled={isExecuting}
+                        >
+                            {isExecuting ? 'Executing...' : 'Execute Workflow'}
+                        </Button>
+                        <p className="text-xs text-gray-500 whitespace-nowrap bg-black/50  p-1 rounded-md text-white">Save workflow before executing</p>
+                    </div>
                 </div>
-            </div>
-            <div className='absolute bottom-10 left-30 w-[70%] flex justify-center items-center'>
-                <Button
-                    className='bg-red-500 hover:bg-red-600 cursor-pointer disabled:opacity-50'
-                    onClick={handleExecuteWorkflow}
-                    disabled={isExecuting}
-                >
-                    {isExecuting ? 'Executing...' : 'Execute Workflow'}
-                </Button>
             </div>
 
             <WorkflowSidebar

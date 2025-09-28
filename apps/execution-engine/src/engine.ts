@@ -87,22 +87,53 @@ export class Engine {
       `Executing node: ${currentNode.name} (type: ${currentNode.type})`
     );
 
-    // Skip model nodes if they somehow end up in main execution flow
-    if (currentNode.name.includes("lmChat") || currentNode.type === "model") {
-      console.info(
-        `Skipping model node ${currentNode.name} in main execution flow`
-      );
+    try {
+      // Skip model nodes if they somehow end up in main execution flow
+      if (currentNode.name.includes("lmChat") || currentNode.type === "model") {
+        console.info(
+          `Skipping model node ${currentNode.name} in main execution flow`
+        );
+        await publishDataToPubSub({
+          ...commonPayload,
+          status: "Running",
+          message: "Model node skipped - should be used by agent nodes",
+          nodeStatus: NodeStatus.success,
+        });
+
+        nextNode = this.getConnectedNode(currentNode);
+        await this.executeNode(nextNode);
+        return;
+      }
+
+      await this.executeNodeByType(currentNode, commonPayload);
+    } catch (error: any) {
+      console.error(`Error executing node ${currentNode.name}:`, error);
+      
+      let errorMessage = "Unknown error occurred";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && error.message) {
+        errorMessage = error.message;
+      }
+
       await publishDataToPubSub({
         ...commonPayload,
-        status: "Running",
-        message: "Model node skipped - should be used by agent nodes",
-        nodeStatus: NodeStatus.success,
+        status: "Failed",
+        message: `Node execution failed: ${errorMessage}`,
+        response: { 
+          error: errorMessage,
+          stack: error.stack || 'No stack trace available'
+        },
+        nodeStatus: NodeStatus.failed,
       });
-
-      nextNode = this.getConnectedNode(currentNode);
-      await this.executeNode(nextNode);
       return;
     }
+  }
+
+  async executeNodeByType(currentNode: Node, commonPayload: any) {
+    let nextNode;
 
     switch (currentNode.name) {
       case "manualTrigger":
@@ -120,20 +151,19 @@ export class Engine {
       case "agent":
         const agent = predefinedNodesTypes["nodes-base.agent"];
 
+        if (!agent || !agent.type) {
+          throw new Error("Agent node type not found or not properly configured");
+        }
+
         const agentResponse = await agent.type.execute({
           parameters: currentNode.parameters,
         });
 
         console.log("Response from agent node:", agentResponse);
 
-        if (!agentResponse.success) {
-          await publishDataToPubSub({
-            ...commonPayload,
-            status: "Failed",
-            response: agentResponse,
-            nodeStatus: NodeStatus.failed,
-          });
-          return;
+        if (!agentResponse || !agentResponse.success) {
+          const errorMessage = agentResponse?.error || agentResponse?.message || "Agent node execution failed";
+          throw new Error(errorMessage);
         }
 
         // Get the connected model (required for agent)
@@ -142,51 +172,24 @@ export class Engine {
         console.log("Connected model result:", suppliedModelResult);
 
         if (!suppliedModelResult.success) {
-          await publishDataToPubSub({
-            ...commonPayload,
-            status: "Failed",
-            response: { error: suppliedModelResult.error },
-            nodeStatus: NodeStatus.failed,
-          });
-          return;
+          throw new Error(suppliedModelResult.error || "Failed to connect to model");
         }
 
-        // Agent MUST have a model connected - this is required in n8n
+        // Agent MUST have a model connected
         if (!suppliedModelResult.model) {
-          await publishDataToPubSub({
-            ...commonPayload,
-            status: "Failed",
-            response: {
-              error:
-                "Problem in node 'AI Agent'\nA Chat Model sub-node must be connected and enabled",
-            },
-            nodeStatus: NodeStatus.failed,
-          });
-          return;
+          throw new Error("Problem in node 'AI Agent'\nA Chat Model sub-node must be connected and enabled");
         }
 
         const userPrompt = agentResponse.data?.prompt;
 
         if (!userPrompt) {
-          await publishDataToPubSub({
-            ...commonPayload,
-            status: "Failed",
-            response: { error: "No prompt received from agent" },
-            nodeStatus: NodeStatus.failed,
-          });
-          return;
+          throw new Error("No prompt received from agent node");
         }
 
         const connectedModel = suppliedModelResult.model;
 
         if (!connectedModel.modelInstance) {
-          await publishDataToPubSub({
-            ...commonPayload,
-            status: "Failed",
-            response: { error: "Model instance not available" },
-            nodeStatus: NodeStatus.failed,
-          });
-          return;
+          throw new Error("Model instance not available - model may not be properly configured");
         }
 
         console.log(
@@ -210,43 +213,44 @@ export class Engine {
         const modelResponse =
           await connectedModel.modelInstance.generateResponse(userPrompt);
 
-        if (modelResponse.success) {
-          await publishDataToPubSub({
-            ...modelCommonPayload,
-            status: "Running",
-            response: modelResponse,
-            nodeStatus: NodeStatus.success,
-          });
-
-          const finalResult = {
-            agent: {
-              prompt: userPrompt,
-              timestamp: agentResponse.data?.timestamp,
-            },
-            model: {
-              modelId: connectedModel.modelId,
-              modelName: connectedModel.modelName,
-              response: modelResponse.response,
-              usage: modelResponse.usage,
-            },
-            message: "Agent processed prompt using connected model",
-          };
-
-          await publishDataToPubSub({
-            ...commonPayload,
-            status: "Running",
-            response: { data: finalResult },
-            nodeStatus: NodeStatus.success,
-          });
-        } else {
+        if (!modelResponse || !modelResponse.success) {
           await publishDataToPubSub({
             ...modelCommonPayload,
             status: "Failed",
             response: modelResponse,
             nodeStatus: NodeStatus.failed,
           });
-          return;
+          const errorMessage = modelResponse?.error || modelResponse?.message || "Model failed to generate response";
+          throw new Error(`Model execution failed: ${errorMessage}`);
         }
+
+        await publishDataToPubSub({
+          ...modelCommonPayload,
+          status: "Running",
+          response: modelResponse,
+          nodeStatus: NodeStatus.success,
+        });
+
+        const finalResult = {
+          agent: {
+            prompt: userPrompt,
+            timestamp: agentResponse.data?.timestamp,
+          },
+          model: {
+            modelId: connectedModel.modelId,
+            modelName: connectedModel.modelName,
+            response: modelResponse.response,
+            usage: modelResponse.usage,
+          },
+          message: "Agent processed prompt using connected model",
+        };
+
+        await publishDataToPubSub({
+          ...commonPayload,
+          status: "Running",
+          response: { data: finalResult },
+          nodeStatus: NodeStatus.success,
+        });
 
         nextNode = this.getConnectedNode(currentNode);
         await this.executeNode(nextNode);
@@ -254,24 +258,23 @@ export class Engine {
 
       case "telegram":
         const telegram = predefinedNodesTypes["nodes-base.telegram"];
+        
+        if (!telegram || !telegram.type) {
+          throw new Error("Telegram node type not found or not properly configured");
+        }
+
         const response = await telegram.type.execute({
           parameters: currentNode.parameters,
           credentialId: currentNode.credentialId,
         });
+        
         console.log("Response from telegram node:", response);
 
-        if (!response.success) {
-          await publishDataToPubSub({
-            ...commonPayload,
-            status: "Failed",
-            response,
-            nodeStatus: NodeStatus.failed,
-          });
-          return;
+        if (!response || !response.success) {
+          const errorMessage = response?.error || response?.message || "Telegram node execution failed";
+          throw new Error(errorMessage);
         }
 
-        // i have to add check here, if the workflow message is sent successfully or not.
-        // if the message is not sent successfully then i have to stop the workflow execution and update the execution status to failed.
         await publishDataToPubSub({
           ...commonPayload,
           status: "Running",
@@ -285,10 +288,22 @@ export class Engine {
 
       case "resend":
         const resend = predefinedNodesTypes["nodes-base.resend"];
+        
+        if (!resend || !resend.type) {
+          throw new Error("Resend node type not found or not properly configured");
+        }
+
         const resp = await resend.type.execute({
           parameters: currentNode.parameters,
           credentialId: currentNode.credentialId,
         });
+
+        console.log("Response from resend node:", resp);
+
+        if (!resp || !resp.success) {
+          const errorMessage = resp?.error || resp?.message || "Resend node execution failed";
+          throw new Error(errorMessage);
+        }
 
         await publishDataToPubSub({
           ...commonPayload,
@@ -296,9 +311,13 @@ export class Engine {
           response: resp,
           nodeStatus: NodeStatus.success,
         });
+        
         nextNode = this.getConnectedNode(currentNode);
         await this.executeNode(nextNode);
         break;
+
+      default:
+        throw new Error(`Unknown or unsupported node type: ${currentNode.name}`);
     }
   }
 
