@@ -1,3 +1,4 @@
+import { generateText } from "ai";
 import type { INodeType, INodeTypeDescription } from "../../types";
 
 export class Agent implements INodeType {
@@ -7,7 +8,7 @@ export class Agent implements INodeType {
     icon: {
       type: "lucide",
       value: "Bot",
-      color: "black"
+      color: "black",
     },
     group: ["transform"],
     version: [1, 1.1, 1.2],
@@ -29,12 +30,9 @@ export class Agent implements INodeType {
         description: "The message or task you want the AI agent to process",
       },
     ],
-
-    // No direct credentials - model handles its own credentials
-    credentials: [],
   };
 
-  async execute({ parameters }: any) {
+  async execute({ parameters, model }: any) {
     try {
       console.log("Executing AI Agent with parameters:", parameters);
 
@@ -48,13 +46,19 @@ export class Agent implements INodeType {
         };
       }
 
-      // Agent processing - this will trigger connected model nodes
+      const response = await generateText({
+        model,
+        prompt: prompt.trim(),
+      });
+
+      console.log("agent response:", response);
+
       const agentResult = {
         prompt: prompt.trim(),
         timestamp: new Date().toISOString(),
         status: "processed",
-        message:
-          "Agent received user message and will process with connected models/tools",
+        output: response.text,
+        response: response,
       };
 
       return {

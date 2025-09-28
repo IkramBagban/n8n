@@ -1,7 +1,6 @@
 import prismaClient from "@repo/db";
 import { predefinedNodesTypes } from "@repo/nodes-base/utils/constants";
 import type { Edge, Node } from "./utils/types";
-import { createClient } from "redis";
 import { createRedisClient } from "./lib/redis";
 
 const publisher = await createRedisClient();
@@ -122,9 +121,9 @@ export class Engine {
         ...commonPayload,
         status: "Failed",
         message: `Node execution failed: ${errorMessage}`,
-        response: { 
+        response: {
           error: errorMessage,
-          stack: error.stack || 'No stack trace available'
+          stack: error.stack || "No stack trace available",
         },
         nodeStatus: NodeStatus.failed,
       });
@@ -152,18 +151,9 @@ export class Engine {
         const agent = predefinedNodesTypes["nodes-base.agent"];
 
         if (!agent || !agent.type) {
-          throw new Error("Agent node type not found or not properly configured");
-        }
-
-        const agentResponse = await agent.type.execute({
-          parameters: currentNode.parameters,
-        });
-
-        console.log("Response from agent node:", agentResponse);
-
-        if (!agentResponse || !agentResponse.success) {
-          const errorMessage = agentResponse?.error || agentResponse?.message || "Agent node execution failed";
-          throw new Error(errorMessage);
+          throw new Error(
+            "Agent node type not found or not properly configured"
+          );
         }
 
         // Get the connected model (required for agent)
@@ -172,33 +162,35 @@ export class Engine {
         console.log("Connected model result:", suppliedModelResult);
 
         if (!suppliedModelResult.success) {
-          throw new Error(suppliedModelResult.error || "Failed to connect to model");
+          throw new Error(
+            suppliedModelResult.error || "Failed to connect to model"
+          );
         }
 
         // Agent MUST have a model connected
         if (!suppliedModelResult.model) {
-          throw new Error("Problem in node 'AI Agent'\nA Chat Model sub-node must be connected and enabled");
+          throw new Error(
+            "Problem in node 'AI Agent'\nA Chat Model sub-node must be connected and enabled"
+          );
         }
 
-        const userPrompt = agentResponse.data?.prompt;
+        const agentResponse = await agent.type.execute({
+          parameters: currentNode.parameters,
+          model: suppliedModelResult.model,
+        });
 
-        if (!userPrompt) {
-          throw new Error("No prompt received from agent node");
+        console.log("Response from agent node:", agentResponse);
+
+        if (!agentResponse || !agentResponse.success) {
+          const errorMessage =
+            agentResponse?.error ||
+            agentResponse?.message ||
+            "Agent node execution failed";
+          throw new Error(errorMessage);
         }
-
-        const connectedModel = suppliedModelResult.model;
-
-        if (!connectedModel.modelInstance) {
-          throw new Error("Model instance not available - model may not be properly configured");
-        }
-
-        console.log(
-          `Using model ${connectedModel.modelName} to process prompt: "${userPrompt}"`
-        );
 
         const modelCommonPayload = {
-          nodeId: connectedModel.modelId,
-          nodeName: connectedModel.modelName,
+          nodeId: suppliedModelResult.modelNodeId,
           executionId: this.executionId,
           workflowId: this.workflowId,
         };
@@ -209,39 +201,27 @@ export class Engine {
           message: "Model processing agent's prompt",
           nodeStatus: NodeStatus.executing,
         });
+        
 
-        const modelResponse =
-          await connectedModel.modelInstance.generateResponse(userPrompt);
-
-        if (!modelResponse || !modelResponse.success) {
-          await publishDataToPubSub({
-            ...modelCommonPayload,
-            status: "Failed",
-            response: modelResponse,
-            nodeStatus: NodeStatus.failed,
-          });
-          const errorMessage = modelResponse?.error || modelResponse?.message || "Model failed to generate response";
-          throw new Error(`Model execution failed: ${errorMessage}`);
-        }
-
-        await publishDataToPubSub({
-          ...modelCommonPayload,
-          status: "Running",
-          response: modelResponse,
-          nodeStatus: NodeStatus.success,
-        });
+        // await publishDataToPubSub({
+        //   ...modelCommonPayload,
+        //   status: "Running",
+        //   // response: modelResponse,
+        //   nodeStatus: NodeStatus.success,
+        // });
 
         const finalResult = {
-          agent: {
-            prompt: userPrompt,
-            timestamp: agentResponse.data?.timestamp,
-          },
-          model: {
-            modelId: connectedModel.modelId,
-            modelName: connectedModel.modelName,
-            response: modelResponse.response,
-            usage: modelResponse.usage,
-          },
+          // agent: {
+          //   // prompt: userPrompt,
+          //   timestamp: agentResponse.data?.timestamp,
+          // },
+          // // model: {
+          // //   modelId: connectedModel.modelId,
+          // //   modelName: connectedModel.modelName,
+          // //   response: modelResponse.response,
+          // //   usage: modelResponse.usage,
+          // // },
+          output: agentResponse.data?.output, // ai output it is
           message: "Agent processed prompt using connected model",
         };
 
@@ -258,20 +238,25 @@ export class Engine {
 
       case "telegram":
         const telegram = predefinedNodesTypes["nodes-base.telegram"];
-        
+
         if (!telegram || !telegram.type) {
-          throw new Error("Telegram node type not found or not properly configured");
+          throw new Error(
+            "Telegram node type not found or not properly configured"
+          );
         }
 
         const response = await telegram.type.execute({
           parameters: currentNode.parameters,
           credentialId: currentNode.credentialId,
         });
-        
+
         console.log("Response from telegram node:", response);
 
         if (!response || !response.success) {
-          const errorMessage = response?.error || response?.message || "Telegram node execution failed";
+          const errorMessage =
+            response?.error ||
+            response?.message ||
+            "Telegram node execution failed";
           throw new Error(errorMessage);
         }
 
@@ -288,9 +273,11 @@ export class Engine {
 
       case "resend":
         const resend = predefinedNodesTypes["nodes-base.resend"];
-        
+
         if (!resend || !resend.type) {
-          throw new Error("Resend node type not found or not properly configured");
+          throw new Error(
+            "Resend node type not found or not properly configured"
+          );
         }
 
         const resp = await resend.type.execute({
@@ -301,7 +288,8 @@ export class Engine {
         console.log("Response from resend node:", resp);
 
         if (!resp || !resp.success) {
-          const errorMessage = resp?.error || resp?.message || "Resend node execution failed";
+          const errorMessage =
+            resp?.error || resp?.message || "Resend node execution failed";
           throw new Error(errorMessage);
         }
 
@@ -311,13 +299,15 @@ export class Engine {
           response: resp,
           nodeStatus: NodeStatus.success,
         });
-        
+
         nextNode = this.getConnectedNode(currentNode);
         await this.executeNode(nextNode);
         break;
 
       default:
-        throw new Error(`Unknown or unsupported node type: ${currentNode.name}`);
+        throw new Error(
+          `Unknown or unsupported node type: ${currentNode.name}`
+        );
     }
   }
 
@@ -382,36 +372,35 @@ export class Engine {
     const modelNode = modelChild.node;
 
     console.log(`Getting required model from: ${modelNode.name}`);
+    const modelName = modelNode.name;
 
-    // Get the model instance supplied by the model node
-    if (modelNode.name === "lmChatGoogleGemini") {
-      const geminiModel = predefinedNodesTypes["nodes-base.lmChatGoogleGemini"];
-
-      const modelSupplyResult = await geminiModel.type.supplyData({
-        parameters: modelNode.parameters,
-        credentialId: modelNode.credentialId,
-      });
-
-      if (modelSupplyResult.success) {
-        return {
-          success: true,
-          model: {
-            modelId: modelNode.id,
-            modelName: modelNode.name,
-            modelInstance: modelSupplyResult.response,
-          },
-        };
-      } else {
-        return {
-          success: false,
-          error: `Model ${modelNode.name} failed to supply: ${modelSupplyResult.error}`,
-        };
-      }
+    if (
+      !Object.keys(predefinedNodesTypes).includes(`nodes-base.${modelName}`)
+    ) {
+      console.log(`Unsupported model type: ${modelName}`);
+      return { success: false, error: `Unsupported model type: ${modelName}` };
     }
 
-    return {
-      success: false,
-      error: `Unsupported model type: ${modelNode.name}`,
-    };
+    // Get the model instance supplied by the model node
+    console.log("model name:", modelNode.name);
+    const llmModel = predefinedNodesTypes[`nodes-base.${modelName}`]; // #Todo: satisfy it's type
+
+    const modelSupplyResult = await llmModel.type.supplyData({
+      parameters: modelNode.parameters,
+      credentialId: modelNode.credentialId,
+    });
+
+    if (modelSupplyResult.success) {
+      return {
+        success: true,
+        model: modelSupplyResult.response,
+        modelNodeId: modelNode.id,
+      };
+    } else {
+      return {
+        success: false,
+        error: `Model ${modelNode.name} failed to supply: ${modelSupplyResult.error}`,
+      };
+    }
   }
 }

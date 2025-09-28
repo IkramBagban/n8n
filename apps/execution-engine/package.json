@@ -13,7 +13,10 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.17",
     "@repo/nodes-base": "*",
-    "redis": "^5.8.2"
+    "ai": "^5.0.56",
+    "redis": "^5.8.2",
+    "zod": "^4.1.11"
   }
 }

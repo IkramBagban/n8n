@@ -10,8 +10,10 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.17",
     "@react-email/render": "^1.2.3",
     "@repo/db": "*",
+    "ai": "^5.0.56",
     "resend": "^6.1.0",
     "uuid": "^13.0.0"
   }

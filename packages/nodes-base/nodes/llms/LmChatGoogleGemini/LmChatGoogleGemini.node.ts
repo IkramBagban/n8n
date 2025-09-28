@@ -1,17 +1,6 @@
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import type { INodeType, INodeTypeDescription } from "../../../types";
-import { Icon } from "./icon";
-
-// function errorDescriptionMapper(error: NodeError) {
-//   if (
-//     error.description?.includes(
-//       "properties: should be non-empty for OBJECT type"
-//     )
-//   ) {
-//     return 'Google Gemini requires at least one <a href="https://docs.n8n.io/advanced-ai/examples/using-the-fromai-function/" target="_blank">dynamic parameter</a> when using tools';
-//   }
-
-//   return error.description ?? "Unknown error";
-// }
+import { getCredentialsById } from "../../../utils/credentials/credentials";
 
 export class LmChatGoogleGemini implements INodeType {
   description: INodeTypeDescription = {
@@ -20,7 +9,7 @@ export class LmChatGoogleGemini implements INodeType {
     name: "lmChatGoogleGemini",
     icon: {
       type: "file",
-      value: "google.svg"
+      value: "google.svg",
     },
     group: ["transform", "model"],
     nodeType: "chat-model", // it is not addded in the type yet
@@ -29,24 +18,6 @@ export class LmChatGoogleGemini implements INodeType {
     defaults: {
       name: "Google Gemini Chat Model",
     },
-    // codex: {
-    // 	categories: ['AI'],
-    // 	subcategories: {
-    // 		AI: ['Language Models', 'Root Nodes'],
-    // 		'Language Models': ['Chat Models (Recommended)'],
-    // 	},
-    // 	resources: {
-    // 		primaryDocumentation: [
-    // 			{
-    // 				url: 'https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.lmchatgooglegemini/',
-    // 			},
-    // 		],
-    // 	},
-    // },
-
-    // inputs: [],
-
-    // outputs: [NodeConnectionTypes.AiLanguageModel],
     outputNames: ["Model"],
     credentials: [
       {
@@ -54,75 +25,59 @@ export class LmChatGoogleGemini implements INodeType {
         required: true,
       },
     ],
-    // requestDefaults: {
-    // 	ignoreHttpStatusErrors: true,
-    // 	baseURL: '={{ $credentials.host }}',
-    // },
+
     properties: [
-      // getConnectionHintNoticeField([NodeConnectionTypes.AiChain, NodeConnectionTypes.AiAgent]),
       {
         displayName: "Model",
-        name: "modelName",
+        name: "modelId",
         type: "options",
         description:
           'The model which will generate the completion. <a href="https://developers.generativeai.google/api/rest/generativelanguage/models/list">Learn more</a>.',
-        typeOptions: {
-          // loadOptions: {
-          // 	routing: {
-          // 		request: {
-          // 			method: 'GET',
-          // 			url: '/v1beta/models',
-          // 		},
-          // 		output: {
-          // 			postReceive: [
-          // 				{
-          // 					type: 'rootProperty',
-          // 					properties: {
-          // 						property: 'models',
-          // 					},
-          // 				},
-          // 				{
-          // 					type: 'filter',
-          // 					properties: {
-          // 						pass: "={{ !$responseItem.name.includes('embedding') }}",
-          // 					},
-          // 				},
-          // 				{
-          // 					type: 'setKeyValue',
-          // 					properties: {
-          // 						name: '={{$responseItem.name}}',
-          // 						value: '={{$responseItem.name}}',
-          // 						description: '={{$responseItem.description}}',
-          // 					},
-          // 				},
-          // 				{
-          // 					type: 'sort',
-          // 					properties: {
-          // 						key: 'name',
-          // 					},
-          // 				},
-          // 			],
-          // 		},
-          // 	},
-          // },
-        },
-
         options: [
           {
-            name: "models/gemini-2.5-flash",
-            value: "models/gemini-2.5-flash",
+            name: "gemini-2.5-flash",
+            value: "gemini-2.5-flash",
             description:
-              "Stable version of Gemini 2.5 Flash, our mid-size multimodal model that supports up to 1 million tokens, released in June of 2025.",
-            action: "Delete a chat message",
+              "Stable version of Gemini 2.5 Flash, mid-size multimodal model with 1M context, June 2025 release.",
+          },
+          {
+            name: "gemini-2.5-pro",
+            value: "gemini-2.5-pro",
+            description:
+              "Latest flagship Gemini 2.5 Pro model, state-of-the-art reasoning and multimodal support.",
+          },
+          {
+            name: "gemini-2.0-flash-lite",
+            value: "gemini-2.0-flash-lite",
+            description:
+              "Lightweight, cost-efficient Gemini 2.0 Flash Lite model for fast inference.",
+          },
+          {
+            name: "gemini-1.5-pro",
+            value: "gemini-1.5-pro",
+            description:
+              "Gemini 1.5 Pro with advanced reasoning and multimodal support, large context window.",
+          },
+          {
+            name: "gemini-1.5-flash",
+            value: "gemini-1.5-flash",
+            description:
+              "Gemini 1.5 Flash, optimized for speed and efficiency with long context.",
+          },
+          {
+            name: "gemini-pro",
+            value: "gemini-pro",
+            description:
+              "Earlier Gemini Pro model, reliable for text-only generation.",
+          },
+          {
+            name: "gemini-flash",
+            value: "gemini-flash",
+            description:
+              "Earlier Gemini Flash model, fast inference, smaller context size.",
           },
         ],
-        // routing: {
-        // 	send: {
-        // 		type: 'body',
-        // 		property: 'model',
-        // 	},
-        // },
-        default: "models/gemini-2.5-flash",
+        default: "gemini-2.5-flash",
       },
     ],
   };
@@ -137,46 +92,21 @@ export class LmChatGoogleGemini implements INodeType {
     try {
       console.log("Supplying Google Gemini model with parameters:", parameters);
 
-      const {
-        modelName = "gemini-2.5-flash",
-        temperature = 0.1,
-        maxOutputTokens = 1000,
-      } = parameters;
+      const { modelId } = parameters;
 
-      // This supplies the model configuration that the agent will use
-      const modelInstance = {
-        provider: "google-gemini",
-        model: modelName,
-        temperature,
-        maxOutputTokens,
-        credentialId,
+      const credentials = await getCredentialsById<{ apiKey: string }>(
+        credentialId!
+      );
 
-        // Method that agent can call to generate responses
-        async generateResponse(prompt: string) {
-          console.log(
-            `Generating response with ${modelName} for prompt:`,
-            prompt
-          );
+      const google = createGoogleGenerativeAI({
+        apiKey: credentials?.apiKey,
+      });
 
-          // # todo: Have to implement real model calling using vercel ai sdk
-          const response = `Generated by ${modelName}: ${prompt}`;
-
-          return {
-            success: true,
-            response,
-            model: modelName,
-            usage: {
-              promptTokens: prompt.length / 4, // rough estimate
-              completionTokens: response.length / 4,
-              totalTokens: (prompt.length + response.length) / 4,
-            },
-          };
-        },
-      };
+      const model = google(modelId || "gemini-2.5-flash");
 
       return {
         success: true,
-        response: modelInstance,
+        response: model,
       };
     } catch (error) {
       console.error("Gemini model supply error:", error);
