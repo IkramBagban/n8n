@@ -36,3 +36,31 @@ export interface WorkflowListProps {
   workflows: Workflow[];
   totalCount: number;
 }
+
+export interface ExecutionData {
+  id: string;
+  workflowId: string | null;
+  workflowName: string;
+  status: 'Canceled' | 'Crashed' | 'Error' | 'Starting' | 'Running' | 'Success';
+  finished: boolean;
+  startedAt: string | null;
+  stoppedAt: string | null;
+  createdAt: string;
+  runtimeMs: number;
+  runtimeFormatted: string;
+}
+
+export interface ExecutionsResponse {
+  executions: ExecutionData[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+  filters: {
+    status?: string;
+    workflowId?: string;
+  };
+}

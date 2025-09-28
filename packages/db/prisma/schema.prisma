@@ -53,9 +53,10 @@ model Workflow {
   updatedAt  DateTime @updatedAt
   projectId  String
 
-  project Project @relation(fields: [projectId], references: [id])
-  Node    Node[]
-  Edge    Edge[]
+  project    Project     @relation(fields: [projectId], references: [id])
+  Nodes      Node[]
+  Edges      Edge[]
+  executions Execution[]
 }
 
 model Node {
@@ -142,9 +143,11 @@ model Execution {
 
   createdAt DateTime  @default(now())
   startedAt DateTime?
-  stoppedAt DateTime?
+  stoppedAt DateTime? 
 
   data Json? // in this i'll store the nodes, and edges and the other metadata at the time of execution.
+
+  workflow Workflow? @relation(fields: [workflowId], references: [id])
 
   @@index([workflowId])
 }
