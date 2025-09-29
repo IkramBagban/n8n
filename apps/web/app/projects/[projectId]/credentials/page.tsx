@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { Search, Plus, Key, MoreHorizontal } from "lucide-react"
 import { projectInstance } from "@/actions/projects"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import prismaClient from "@repo/db"
+import { authOptions } from "../../../../lib/auth"
+
 
 interface ProjectCredentialsPageProps {
     params: {

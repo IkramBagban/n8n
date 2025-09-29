@@ -1,7 +1,7 @@
+import { authOptions } from "@/lib/auth";
 import prismaClient from "@repo/db";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
 
 export const POST = async (req: Request) => {
   try {

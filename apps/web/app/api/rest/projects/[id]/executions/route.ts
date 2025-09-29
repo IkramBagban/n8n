@@ -1,22 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import prismaClient from "@repo/db";
 
-interface Context {
-  params: {
-    id: string;
-  };
-}
-
-export async function GET(request: NextRequest, context: Context) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id: projectId } = await context.params;
+    const { id: projectId } = params;
     const url = new URL(request.url);
-    
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100); // Max 100
-    const status = url.searchParams.get('status');
-    const workflowId = url.searchParams.get('workflowId');
-    
+
+    const page = parseInt(url.searchParams.get("page") || "1");
+    const limit = Math.min(
+      parseInt(url.searchParams.get("limit") || "50"),
+      100
+    ); // Max 100
+    const status = url.searchParams.get("status");
+    const workflowId = url.searchParams.get("workflowId");
+
     const skip = (page - 1) * limit;
 
     if (!projectId) {
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest, context: Context) {
       }),
       prismaClient.execution.count({
         where: whereConditions,
-      })
+      }),
     ]);
 
     if (executions.length === 0) {
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest, context: Context) {
         where: { id: projectId },
         select: { id: true },
       });
-      
+
       if (!projectExists) {
         return NextResponse.json(
           { error: "Project not found" },
@@ -120,13 +120,16 @@ export async function GET(request: NextRequest, context: Context) {
   }
 }
 
-function calculateRuntime(startedAt: Date | null, stoppedAt: Date | null): number {
+function calculateRuntime(
+  startedAt: Date | null,
+  stoppedAt: Date | null
+): number {
   if (!startedAt) return 0;
-  
+
   if (stoppedAt) {
     return stoppedAt.getTime() - startedAt.getTime();
   }
-  
+
   return Date.now() - startedAt.getTime();
 }
 
@@ -134,12 +137,12 @@ function formatRuntime(ms: number): string {
   if (ms < 1000) {
     return `${Math.round(ms)}ms`;
   }
-  
+
   const seconds = ms / 1000;
   if (seconds < 60) {
     return `${seconds.toFixed(3)}s`;
   }
-  
+
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
   return `${minutes}m ${remainingSeconds.toFixed(1)}s`;
