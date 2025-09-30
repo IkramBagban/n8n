@@ -11,7 +11,7 @@ export function DashboardHeader({
     title,
     subtitle,
     showCreateButton = true,
-    projectId = "cmfjrtqt40001v7oc8j6a4rz2"
+    // projectId = "cmfjrtqt40001v7oc8j6a4rz2"
 }: DashboardHeaderProps) {
     return (
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -22,7 +22,8 @@ export function DashboardHeader({
                 )}
             </div>
             {showCreateButton && (
-                <CreateDropdown projectId={projectId} />
+                // <CreateDropdown projectId={projectId} />
+                <CreateDropdown />
             )}
         </div>
     )

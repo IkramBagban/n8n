@@ -10,9 +10,9 @@ import { projectInstance } from "@/actions/projects"
 import { ProjectSettingsForm } from "@/components/project-settings-form"
 
 interface ProjectSettingsPageProps {
-    params: {
+    params: Promise<{
         projectId: string
-    }
+    }>
 }
 
 export default async function ProjectSettingsPage({ params }: ProjectSettingsPageProps) {

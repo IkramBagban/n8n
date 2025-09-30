@@ -38,7 +38,7 @@ interface ExecutionMessage {
     status: string;
     message?: string;
     nodeStatus?: 'executing' | 'success' | 'failed';
-    response?: unknown;
+    response?: any;
 }
 
 interface NodeExecutionState {
@@ -253,7 +253,6 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
         eventSource.onmessage = (event) => {
             const parsedData: ExecutionMessage = JSON.parse(event.data);
-            console.log("Message received:", parsedData);
 
             // Add to execution logs
             setExecutionLogs((currentLogs) => [...currentLogs, parsedData]);
@@ -301,12 +300,15 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
             // Check if workflow execution finished
             if (parsedData.status === "Success") {
+                console.log("Workflow execution completed successfully", executionLogs);
                 setIsExecuting(false);
                 eventSource.close();
                 toast.success('Workflow executed successfully! ✅', {
                     duration: 4000,
                 });
             } else if (parsedData.status === "Failed") {
+                console.log("Workflow execution failed", executionLogs);
+
                 setIsExecuting(false);
                 eventSource.close();
 
@@ -496,7 +498,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                         <Controls />
                         <MiniMap />
                     </ReactFlow>
-                
+
                     <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-1">
                         <Button
                             className="bg-red-500 hover:bg-red-600 cursor-pointer disabled:opacity-50 px-6 py-2"

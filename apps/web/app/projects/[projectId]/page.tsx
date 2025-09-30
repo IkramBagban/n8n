@@ -6,9 +6,9 @@ import { getWorkflowsOfProject } from "@/actions/workflows"
 import { projectInstance } from "@/actions/projects"
 
 interface ProjectPageProps {
-  params: {
+  params: Promise<{
     projectId: string
-  }
+  }>
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {

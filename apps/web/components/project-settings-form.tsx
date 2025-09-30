@@ -13,7 +13,7 @@ interface ProjectSettingsFormProps {
         id: string
         name: string
         description: string | null
-        icon?: object
+        icon?: any
     }
 }
 

@@ -19,6 +19,8 @@ export const getWorkflows = async (): Promise<{
       },
     },
   });
+
+  // @ts-ignore
   return { data: workflows, count: workflows.length };
 };
 
@@ -42,5 +44,6 @@ export const getWorkflowsOfProject = async (
   if (!workflows) {
     return { data: [], count: 0 };
   }
+  // @ts-ignore
   return { data: workflows, count: workflows.length };
 };

@@ -5,6 +5,8 @@ export type Node = {
   parameters: Record<string, any>;
   data: Record<string, any>;
   name: string;
+  credentialId?: string;
+  
 };
 
 export interface Edge {

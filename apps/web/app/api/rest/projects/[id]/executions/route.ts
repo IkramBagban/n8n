@@ -3,10 +3,10 @@ import prismaClient from "@repo/db";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: projectId } = params;
+    const { id: projectId } = await params;
     const url = new URL(request.url);
 
     const page = parseInt(url.searchParams.get("page") || "1");

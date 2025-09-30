@@ -35,7 +35,7 @@ export interface INodeIcon {
 }
 
 interface NodeIconProps {
-  icon: string | INodeIcon;
+  icon: string | INodeIcon | any;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }

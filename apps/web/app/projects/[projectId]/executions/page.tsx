@@ -5,9 +5,9 @@ import { notFound } from "next/navigation"
 import { projectInstance } from "@/actions/projects"
 
 interface ProjectExecutionsPageProps {
-  params: {
+  params: Promise<{
     projectId: string
-  }
+  }>
 }
 
 export default async function ProjectExecutionsPage({ params }: ProjectExecutionsPageProps) {

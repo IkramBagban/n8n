@@ -12,9 +12,7 @@ import { authOptions } from "../../../../lib/auth"
 
 
 interface ProjectCredentialsPageProps {
-    params: {
-        projectId: string
-    }
+    params: Promise<{ projectId: string }>
 }
 
 interface Credential {
