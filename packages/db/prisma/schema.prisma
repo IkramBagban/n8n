@@ -21,6 +21,9 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   Project   Project[]
+
+  @@index([id])
+  @@index([email])
 }
 
 enum ProjectType {
@@ -42,6 +45,9 @@ model Project {
   user        User          @relation(fields: [userId], references: [id])
   workflows   Workflow[]
   credentials Credentials[]
+
+  @@index([id])
+  @@index([userId])
 }
 
 model Workflow {
@@ -54,9 +60,12 @@ model Workflow {
   projectId  String
 
   project    Project     @relation(fields: [projectId], references: [id])
-  Node      Node[]
-  Edge      Edge[]
+  Node       Node[]
+  Edge       Edge[]
   executions Execution[]
+
+  @@index([id])
+  @@index([projectId])
 }
 
 model Node {
@@ -77,6 +86,9 @@ model Node {
 
   outgoingEdges Edge[] @relation("SourceNode")
   incomingEdges Edge[] @relation("TargetNode")
+
+  @@index([id])
+  @@index([workflowId])
 }
 
 model Edge {
@@ -92,6 +104,9 @@ model Edge {
   workflow   Workflow @relation(fields: [workflowId], references: [id])
   sourceNode Node     @relation("SourceNode", fields: [source], references: [id])
   targetNode Node     @relation("TargetNode", fields: [target], references: [id])
+
+  @@index([id])
+  @@index([workflowId])
 }
 
 model Credentials {
@@ -109,6 +124,9 @@ model Credentials {
 
   project Project @relation(fields: [projectId], references: [id])
   Node    Node[]
+
+  @@index([id])
+  @@index([projectId])
 }
 
 // export type WorkflowExecuteMode =
@@ -143,22 +161,12 @@ model Execution {
 
   createdAt DateTime  @default(now())
   startedAt DateTime?
-  stoppedAt DateTime? 
+  stoppedAt DateTime?
 
   data Json? // in this i'll store the nodes, and edges and the other metadata at the time of execution.
 
   workflow Workflow? @relation(fields: [workflowId], references: [id])
 
+  @@index([id])
   @@index([workflowId])
 }
-
-// model ExecutionData {
-//   id          String   @id @default(cuid())
-//   workflowId  String
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
-//   executionId String   @unique
-
-//   execution Execution @relation(fields: [executionId], references: [id])
-//   workflow  Workflow  @relation(fields: [workflowId], references: [id])
-// }
