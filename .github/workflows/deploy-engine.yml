@@ -1,0 +1,43 @@
+name: Deploy Execution Engine
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & Push Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: docker/Dockerfile.engine
+          push: true
+          tags: ikrambagban/n8n-engine:${{ github.sha }}
+
+      - name: Clone super-ops repo, update, and push
+        env:
+          PAT: ${{ secrets.PAT }}
+        run: |
+          git clone https://github.com/IkramBagban/super-ops.git
+          cd super-ops
+          # Update Docker image in deployment YAML
+          sed -i 's|image: ikrambagban/n8n-engine:.*|image: ikrambagban/n8n-engine:${{ github.sha }}|' n8n-execution-engine/deployment.yml
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add n8n-execution-engine/deployment.yml
+          git commit -m "Update n8n-execution-engine image to ${{ github.sha }}" || true
+          git push https://${PAT}@github.com/IkramBagban/super-ops.git main
