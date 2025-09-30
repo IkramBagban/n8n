@@ -1,0 +1,20 @@
+FROM oven/bun:alpine
+
+WORKDIR /usr/src/app
+
+COPY .npmrc package.json turbo.json bun.lock ./
+COPY packages/db/package.json ./packages/db/package.json
+COPY packages/nodes-base/package.json ./packages/nodes-base/package.json
+COPY apps/execution-engine/package.json ./apps/execution-engine/package.json
+
+RUN bun install
+
+COPY apps/execution-engine ./apps/execution-engine
+COPY packages ./packages
+
+WORKDIR /usr/src/app/packages/db
+RUN bunx prisma generate
+
+WORKDIR /usr/src/app/apps/execution-engine
+
+CMD ["bun", "start"]

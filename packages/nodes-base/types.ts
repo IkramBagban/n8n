@@ -5,7 +5,8 @@ type NodeGroupType =
   | "organization"
   | "schedule"
   | "transform"
-  | "trigger";
+  | "trigger"
+  | "model";
 
 export type ThemeIconColor =
   | "gray"
@@ -25,7 +26,7 @@ export type ThemeIconColor =
   | "crimson";
 
 export interface INodeIcon {
-  type: 'font-awesome' | 'lucide' | 'file' | 'url' | 'svg';
+  type: "font-awesome" | "lucide" | "file" | "url" | "svg";
   value: string;
   color?: ThemeIconColor;
 }
@@ -94,7 +95,7 @@ export type NodePropertyTypes =
   | "workflowSelector";
 
 export interface INodePropertyTypeOptions {
-  password?: boolean; 
+  password?: boolean;
   // [key: string]: any;
 }
 export interface INodeProperties {
@@ -159,6 +160,7 @@ export interface INodeCredentialDescription {
 }
 
 export interface INodeTypeDescription extends INodeTypeBaseDescription {
+  nodeType?: string; // temporary
   version: number | number[];
   defaults: NodeDefaults;
   eventTriggerDescription?: string;
@@ -193,6 +195,8 @@ export interface INodeTypeDescription extends INodeTypeBaseDescription {
   // __loadOptionsMethods?: string[]; // only for validation during build
 }
 export interface INodeType {
+  nodeType?: any; // have to see this 
+
   description: INodeTypeDescription;
   // supplyData?(this: ISupplyDataFunctions, itemIndex: number): Promise<SupplyData>;
   // execute?(this: IExecuteFunctions): Promise<NodeOutput>;
@@ -265,13 +269,13 @@ export interface ICredentialType {
   properties: INodeProperties[];
   documentationUrl?: string;
   __overwrittenProperties?: string[];
-  authenticate?: IAuthenticate;
-  preAuthentication?: (
-    this: IHttpRequestHelper,
-    credentials: ICredentialDataDecryptedObject
-  ) => Promise<IDataObject>;
-  test?: ICredentialTestRequest;
+  // authenticate?: IAuthenticate;
+  // preAuthentication?: (
+  //   this: IHttpRequestHelper,
+  //   credentials: ICredentialDataDecryptedObject
+  // ) => Promise<IDataObject>;
+  // test?: ICredentialTestRequest;
   genericAuth?: boolean;
-  httpRequestNode?: ICredentialHttpRequestNode;
+  // httpRequestNode?: ICredentialHttpRequestNode;
   supportedNodes?: string[];
 }
