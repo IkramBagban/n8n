@@ -19,11 +19,14 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build & Push Docker Image with DB Secret
+      - name: Build & Push Docker Image with Combined Secret
         run: |
-          echo "${{ secrets.DATABASE_URL }}" > dburl.txt
+          # Save the secret to a temporary file
+          echo "${{ secrets.BUILD_ENV_FILE }}" > .env.build
+
+          # Build Docker image with secret
           docker build \
-            --secret id=dburl,src=dburl.txt \
+            --secret id=envfile,src=.env.build \
             -t ikrambagban/n8n-web:${{ github.sha }} \
             -f docker/Dockerfile.web \
             .

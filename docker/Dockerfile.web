@@ -24,9 +24,9 @@ RUN bunx prisma generate
 
 WORKDIR /usr/src/app/apps/web
 
-RUN --mount=type=secret,id=dburl \
-  export DATABASE_URL=$(cat /run/secrets/dburl) && \
-  bun run build
+RUN --mount=type=secret,id=envfile \
+    export $(cat /run/secrets/envfile | xargs) && \
+    bun run build
 
 EXPOSE 3000
 
