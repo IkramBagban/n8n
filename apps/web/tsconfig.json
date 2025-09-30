@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["./global.d.ts"],
     "baseUrl": ".",
     "plugins": [
       {
