@@ -34,7 +34,6 @@ jobs:
         run: |
           git clone https://github.com/IkramBagban/super-ops.git
           cd super-ops
-          # Update Docker image in deployment YAML
           sed -i 's|image: ikrambagban/n8n-engine:.*|image: ikrambagban/n8n-engine:${{ github.sha }}|' n8n-execution-engine/deployment.yml
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"

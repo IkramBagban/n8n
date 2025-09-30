@@ -50,7 +50,7 @@ export class Telegram implements INodeType {
     name: "telegram",
     icon: {
       type: "file",
-      value: "telegram.svg"
+      value: "telegram.svg",
     },
     group: ["output"],
     version: [1, 1.1, 1.2],
@@ -180,12 +180,12 @@ export class Telegram implements INodeType {
     const credential = await prismaClient.credentials.findFirst({
       where: { id: credentialId },
       select: { data: true },
-    });
+    }) as { data: { accessToken: string } } | null;
 
     console.log("feteched credential ----> ", credential);
     const url = `https://api.telegram.org/bot${credential?.data?.accessToken}/sendMessage?chat_id=${parameters?.chatId}&text=${parameters.text}`;
     const response = await fetch(url);
-    const data = await response.json();
+    const data = (await response.json()) as any;
     if (!data?.ok) {
       return { success: false, error: "Bad Request" };
     }
