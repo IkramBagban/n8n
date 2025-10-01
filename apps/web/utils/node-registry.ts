@@ -11,16 +11,10 @@ export function getNodeIcon(nodeType: string): string | INodeIcon {
   }
   
   if (!nodeDefinition?.type?.description?.icon) {
-    console.log(`Icon not found for nodeType: ${nodeType}`, { 
-      availableKeys: Object.keys(predefinedNodesTypes),
-      nodeDefinition: nodeDefinition ? 'found' : 'not found'
-    });
-    // Return default icon if not found
     return { type: 'lucide', value: 'Settings', color: 'gray' };
   }
   
   const icon = nodeDefinition.type.description.icon;
-  console.log(`Found icon for nodeType: ${nodeType}`, { icon });
   
   // If icon is already in new format, return it
   if (typeof icon === 'object') {

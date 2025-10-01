@@ -47,14 +47,11 @@ export function NodeIcon({ icon, size = 'md', className = '' }: NodeIconProps) {
     lg: 'w-6 h-6',
   };
 
-  console.log('NodeIcon rendering:', { icon, size, className });
-
-  // Handle legacy string format
   if (typeof icon === 'string') {
     return <LegacyIcon icon={icon} size={size} className={className} />;
   }
 
-  // Handle new object format
+
   const { type, value, color } = icon;
   const iconClass = `${sizeClasses[size]} ${className}`;
   const iconColor = color || 'currentColor';

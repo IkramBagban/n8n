@@ -172,10 +172,10 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
             workflowCtx.setNodes(updatedNodes);
 
-            // Show success toast for node configuration save
-            toast.success(`Node "${updatedNode.data.label || updatedNode.name}" configuration saved!`, {
-                duration: 3000,
-            });
+            // // Show success toast for node configuration save
+            // toast.success(`Node "${updatedNode.data.label || updatedNode.name}" configuration saved!`, {
+            //     duration: 3000,
+            // });
 
             return updatedNodes;
         });
@@ -319,10 +319,10 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 setIsExecuting(false);
                 eventSource.close();
                 workflowCtx.setJsonOutput(parsedData.json);
-                
+
                 setExecutionOutput(parsedData.json);
                 setIsOutputPanelOpen(true);
-                
+
                 toast.success('Workflow executed successfully! ✅', {
                     duration: 4000,
                 });
@@ -380,7 +380,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
     const handleSaveWorkflowName = async () => {
         if (!tempWorkflowName.trim() || !workflowData) return;
-        
+
         try {
             await updateWorkflowData({ name: tempWorkflowName.trim() });
             setIsEditingWorkflowName(false);
@@ -526,7 +526,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {workflowData && (
+                        {/* {workflowData && (
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-gray-600">
                                     {workflowData.active ? 'Active' : 'Inactive'}
@@ -536,20 +536,20 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                                     onCheckedChange={handleToggleActive}
                                 />
                             </div>
-                        )}
+                        )} */}
 
                         <div className="flex items-center gap-2">
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => setIsOutputPanelOpen(true)}
                                 disabled={!executionOutput}
                             >
                                 Output
                             </Button>
-                            <Button variant="outline" size="sm">
+                            {/* <Button variant="outline" size="sm">
                                 Share
-                            </Button>
+                            </Button> */}
                             <Button
                                 size="sm"
                                 className="bg-red-500 hover:bg-red-600 text-white"
@@ -577,10 +577,10 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                         <button className="px-4 py-3 text-sm font-medium text-gray-900 border-b-2 border-gray-900">
                             Editor
                         </button>
-                        <button className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                        <button className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 cursor-not-allowed" disabled>
                             Executions
                         </button>
-                        <button className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                        <button className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 cursor-not-allowed" disabled>
                             Evaluations
                         </button>
                     </div>

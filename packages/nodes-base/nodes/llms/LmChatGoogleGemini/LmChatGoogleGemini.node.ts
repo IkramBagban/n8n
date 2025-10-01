@@ -90,8 +90,6 @@ export class LmChatGoogleGemini implements INodeType {
     credentialId?: string;
   }): Promise<{ success: boolean; response?: any; error?: string }> {
     try {
-      console.log("Supplying Google Gemini model with parameters:", parameters);
-
       const { modelId } = parameters;
 
       const credentials = await getCredentialsById<{ apiKey: string }>(

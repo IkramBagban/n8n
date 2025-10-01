@@ -49,32 +49,43 @@ const adminItems = [
     title: "Admin Panel",
     href: "/home/admin",
     icon: Settings,
+    disabled: true,
   },
   {
     title: "Templates",
     href: "/home/templates",
     icon: FileText,
+    disabled: true,
+
   },
   {
     title: "Variables",
     href: "/home/variables",
     icon: Variable,
+    disabled: true,
+
   },
   {
     title: "Insights",
     href: "/home/insights",
     icon: BarChart3,
+    disabled: true,
+
   },
   {
     title: "Help",
     href: "/home/help",
     icon: HelpCircle,
+    disabled: true,
+
   },
   {
     title: "What's New",
     href: "/home/whats-new",
     icon: Sparkles,
     badge: "1",
+    disabled: true,
+
   },
 ]
 
@@ -209,7 +220,7 @@ export function AppSidebar() {
                       pathname === item.href && "bg-gray-100 text-gray-900 font-medium"
                     )}
                   >
-                    <Link href={item.href} className="flex items-center gap-3">
+                    <Link href={item.href} className="flex items-center gap-3 cursor-not-allowed" aria-disabled={item.disabled}>
                       <item.icon className="w-4 h-4" />
                       <span>{item.title}</span>
                       {item.badge && (

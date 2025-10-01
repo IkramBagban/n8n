@@ -1,14 +1,11 @@
-import prismaClient from "@repo/db";
 import { predefinedNodesTypes } from "@repo/nodes-base/utils/constants";
 import type { Edge, Node } from "./utils/types";
 import { createRedisClient } from "./lib/redis";
-import type { json } from "zod";
 import { NodeOutput } from "./lib/node-output";
 
 const publisher = await createRedisClient();
 
 const publishDataToPubSub = async (payload: Record<string, any>) => {
-  console.log("Publishing...");
   await publisher.publish(
     `execution-${payload.executionId}`,
     JSON.stringify({ ...payload })
@@ -20,8 +17,6 @@ enum NodeStatus {
   failed = "failed",
   executing = "executing",
 }
-
-
 
 export class Engine {
   workflowId: string | null = null;
@@ -47,11 +42,10 @@ export class Engine {
     const triggerNode = this.nodes.find((node) => node.type === "trigger");
 
     if (!triggerNode) {
-      console.info("There is no trigger node");
       await publishDataToPubSub({
         executionId: this.executionId,
         status: "Failed",
-        
+
         message: "There is no trigger node",
       });
 
@@ -89,9 +83,6 @@ export class Engine {
     });
 
     let nextNode;
-    console.info(
-      `Executing node: ${currentNode.name} (type: ${currentNode.type})`
-    );
 
     try {
       // Skip model nodes if they somehow end up in main execution flow
@@ -167,8 +158,6 @@ export class Engine {
         // Get the connected model (required for agent)
         const suppliedModelResult = await this.getConnectedModel(currentNode);
 
-        console.log("Connected model result:", suppliedModelResult);
-
         if (!suppliedModelResult.success) {
           throw new Error(
             suppliedModelResult.error || "Failed to connect to model"
@@ -186,8 +175,6 @@ export class Engine {
           parameters: currentNode.parameters,
           model: suppliedModelResult.model,
         });
-
-        console.log("Response from agent node:", agentResponse);
 
         if (!agentResponse || !agentResponse.success) {
           const errorMessage =
@@ -210,29 +197,12 @@ export class Engine {
           nodeStatus: NodeStatus.executing,
         });
 
-        // await publishDataToPubSub({
-        //   ...modelCommonPayload,
-        //   status: "Running",
-        //   // response: modelResponse,
-        //   nodeStatus: NodeStatus.success,
-        // });
-
         this.nodeOutput.addOutput({
           nodeId: currentNode.id,
           nodeName: currentNode.name,
           json: { output: agentResponse.data?.output },
         });
         const finalResult = {
-          // agent: {
-          //   // prompt: userPrompt,
-          //   timestamp: agentResponse.data?.timestamp,
-          // },
-          // // model: {
-          // //   modelId: connectedModel.modelId,
-          // //   modelName: connectedModel.modelName,
-          // //   response: modelResponse.response,
-          // //   usage: modelResponse.usage,
-          // // },
           output: agentResponse.data?.output, // ai output it is
           message: "Agent processed prompt using connected model",
         };
@@ -261,8 +231,6 @@ export class Engine {
           parameters: currentNode.parameters,
           credentialId: currentNode.credentialId,
         });
-
-        console.log("Response from telegram node:", response);
 
         if (!response || !response.success) {
           const errorMessage =
@@ -367,13 +335,11 @@ export class Engine {
   // Get the connected model instance from the agent node (required - one model must be connected)
   async getConnectedModel(agentNode: Node) {
     const childNodes = this.getConnectedChildNodes(agentNode);
-    console.log("Agent child nodes:", childNodes);
     const modelNodes = childNodes.filter(
       (child) =>
         child?.handleType === "chat-model" ||
         child?.node.name.includes("lmChat")
     );
-    console.log("Filtered model nodes:", modelNodes);
 
     if (modelNodes.length === 0) {
       // No model connected - this is required for agents
@@ -394,14 +360,11 @@ export class Engine {
     }
 
     const modelNode = modelChild.node;
-
-    console.log(`Getting required model from: ${modelNode.name}`);
     const modelName = modelNode.name;
 
     if (
       !Object.keys(predefinedNodesTypes).includes(`nodes-base.${modelName}`)
     ) {
-      console.log(`Unsupported model type: ${modelName}`);
       return { success: false, error: `Unsupported model type: ${modelName}` };
     }
 

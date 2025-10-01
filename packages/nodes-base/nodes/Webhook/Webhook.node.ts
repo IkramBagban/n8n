@@ -1,8 +1,3 @@
-/* eslint-disable n8n-nodes-base/node-execute-block-wrong-error-thrown */
-import { createWriteStream } from "fs";
-import { rm, stat } from "fs/promises";
-import { pipeline } from "stream/promises";
-import { v4 as uuid } from "uuid";
 import type {
   INodeProperties,
   INodeType,

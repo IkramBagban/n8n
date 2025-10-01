@@ -19,15 +19,10 @@ interface TriggerNodeProps {
 
 export function TriggerNode({ data }: TriggerNodeProps) {
   const executionStatus = data.executionStatus || 'idle';
-  
-  console.log('TriggerNode data:', data);
-  
-  const getTriggerNodeIcon = (): string | INodeIcon => {
-    console.log('TriggerNode nodeType:', data.nodeType);
     
+  const getTriggerNodeIcon = (): string | INodeIcon => {
     if (data.nodeType) {
       const registryIcon = getNodeIcon(data.nodeType);
-      console.log('TriggerNode registryIcon for', data.nodeType, ':', registryIcon);
       if (registryIcon) return registryIcon;
     }
     

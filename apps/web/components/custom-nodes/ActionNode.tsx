@@ -20,14 +20,10 @@ interface ActionNodeProps {
 export function ActionNode({ data }: ActionNodeProps) {
     const executionStatus = data.executionStatus || 'idle';
     
-    console.log('ActionNode data:', data);
     
     const getActionNodeIcon = (): string | INodeIcon => {
-        console.log('ActionNode nodeType:', data.nodeType);
-        
         if (data.nodeType) {
             const registryIcon = getNodeIcon(data.nodeType);
-            console.log('ActionNode registryIcon for', data.nodeType, ':', registryIcon);
             if (registryIcon) return registryIcon;
         }
         

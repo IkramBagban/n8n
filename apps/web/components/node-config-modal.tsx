@@ -51,9 +51,6 @@ interface NodeProperty {
     [key: string]: unknown;
 }
 
-
-
-
 export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: NodeConfigModalProps) {
     const [nodeData, setNodeData] = useState<Node | null>(node)
     const [activeTab, setActiveTab] = useState('parameters')
@@ -63,17 +60,14 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
 
 
     const workflowCtx = useWorkflowCtx();
-    const nodeOutput = workflowCtx.getJsonOutputById(isOpen ? node.id : null);
-    console.log("nodeOutput ---> ", nodeOutput)
+    const nodeOutput = workflowCtx?.getJsonOutputById(isOpen ? node.id : null);
+
     const fetchCredentials = useCallback(async () => {
-        console.log("in get credentials", { nodeData, node })
         if (!nodeData?.data?.credentials || nodeData?.data?.credentials?.length === 0) {
-            console.log("in")
             return
         }
 
         const creds = await getNodeCredentials(nodeData?.data?.credentials || [], projectId);
-        console.log("credentials", creds)
         setCredentials(creds);
     }, [nodeData, node, projectId])
 
@@ -148,7 +142,6 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
     }
 
     const handleCreateCredential = (credentialType: string) => {
-        console.log("Create new credential for", credentialType)
         setSelectedCredentialType(credentialType)
         setShowCredentialModal(true)
     }
@@ -262,10 +255,8 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                                                     <h4 className="font-semibold text-gray-900 mb-4">Configuration</h4>
                                                     <div className="space-y-6">
                                                         {Object.keys(nodeData?.data.properties || {}).map((key) => {
-                                                            // console.log("Key", { key, props: nodeData?.data.properties })
                                                             const property = nodeData?.data.properties[key]
 
-                                                            // Handle notice type differently - no label needed
                                                             if (property.type === 'notice') {
                                                                 return (
                                                                     <div key={key}>

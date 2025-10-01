@@ -34,11 +34,8 @@ export class Agent implements INodeType {
 
   async execute({ parameters, model }: any) {
     try {
-      console.log("Executing AI Agent with parameters:", parameters);
-
       const { prompt } = parameters;
 
-      console.log("Agent received prompt:", prompt);
       if (!prompt.trim()) {
         return {
           success: false,

@@ -77,7 +77,6 @@ export function WorkflowSidebar({
         getActionNodes();
     }, []);
 
-    console.log("fetched nodes", { availableTriggerNodes, availableActionNodes })
     const filteredTriggers = availableTriggerNodes.filter(node =>
         node.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         node.description.toLowerCase().includes(searchQuery.toLowerCase())

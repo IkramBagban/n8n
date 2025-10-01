@@ -63,7 +63,6 @@ export class Resend implements INodeType {
   };
 
   async execute({ parameters, credentialId }: any) {
-    console.log("params -------> ", { parameters, credentialId });
     if (!parameters) {
       return console.error("parameters are not provided");
     }
