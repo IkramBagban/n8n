@@ -2,6 +2,8 @@ import prismaClient from "@repo/db";
 import { predefinedNodesTypes } from "@repo/nodes-base/utils/constants";
 import type { Edge, Node } from "./utils/types";
 import { createRedisClient } from "./lib/redis";
+import type { json } from "zod";
+import { NodeOutput } from "./lib/node-output";
 
 const publisher = await createRedisClient();
 
@@ -19,12 +21,14 @@ enum NodeStatus {
   executing = "executing",
 }
 
+
+
 export class Engine {
   workflowId: string | null = null;
   executionId: string | null = null;
   nodes: Node[] = [];
   edges: Edge[] = [];
-
+  nodeOutput: NodeOutput;
   constructor(
     workflowId: string,
     executionId: string,
@@ -35,6 +39,7 @@ export class Engine {
     this.executionId = executionId;
     this.nodes = nodes;
     this.edges = edges;
+    this.nodeOutput = new NodeOutput();
   }
 
   async run() {
@@ -46,6 +51,7 @@ export class Engine {
       await publishDataToPubSub({
         executionId: this.executionId,
         status: "Failed",
+        
         message: "There is no trigger node",
       });
 
@@ -60,6 +66,7 @@ export class Engine {
       console.info("No more nodes to execute. Workflow finished.");
       await publishDataToPubSub({
         executionId: this.executionId,
+        json: this.nodeOutput.json,
         status: "Success",
         message: "Workflow execution finished",
       });
@@ -107,11 +114,11 @@ export class Engine {
       await this.executeNodeByType(currentNode, commonPayload);
     } catch (error: any) {
       console.error(`Error executing node ${currentNode.name}:`, error);
-      
+
       let errorMessage = "Unknown error occurred";
       if (error instanceof Error) {
         errorMessage = error.message;
-      } else if (typeof error === 'string') {
+      } else if (typeof error === "string") {
         errorMessage = error;
       } else if (error && error.message) {
         errorMessage = error.message;
@@ -121,6 +128,7 @@ export class Engine {
         ...commonPayload,
         status: "Failed",
         message: `Node execution failed: ${errorMessage}`,
+        json: this.nodeOutput.json,
         response: {
           error: errorMessage,
           stack: error.stack || "No stack trace available",
@@ -201,7 +209,6 @@ export class Engine {
           message: "Model processing agent's prompt",
           nodeStatus: NodeStatus.executing,
         });
-        
 
         // await publishDataToPubSub({
         //   ...modelCommonPayload,
@@ -210,6 +217,11 @@ export class Engine {
         //   nodeStatus: NodeStatus.success,
         // });
 
+        this.nodeOutput.addOutput({
+          nodeId: currentNode.id,
+          nodeName: currentNode.name,
+          json: { output: agentResponse.data?.output },
+        });
         const finalResult = {
           // agent: {
           //   // prompt: userPrompt,
@@ -267,6 +279,12 @@ export class Engine {
           nodeStatus: NodeStatus.success,
         });
 
+        this.nodeOutput.addOutput({
+          nodeId: currentNode.id,
+          nodeName: currentNode.name,
+          json: response.data,
+        });
+
         nextNode = this.getConnectedNode(currentNode);
         await this.executeNode(nextNode);
         break;
@@ -298,6 +316,12 @@ export class Engine {
           status: "Running",
           response: resp,
           nodeStatus: NodeStatus.success,
+        });
+
+        this.nodeOutput.addOutput({
+          nodeId: currentNode.id,
+          nodeName: currentNode.name,
+          json: resp,
         });
 
         nextNode = this.getConnectedNode(currentNode);
