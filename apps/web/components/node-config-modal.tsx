@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { X, ExternalLink, Settings, BookOpen } from 'lucide-react'
 import {
     Dialog,
@@ -17,6 +17,8 @@ import { useWorkflowCtx } from '@/store/workflow/workflow-context'
 import { getNodeCredentials } from '@/actions/credentials'
 import { CredentialsSection } from './credentials-section'
 import { PropertyRenderer } from './property-renderer'
+import { CredentialConfigModal } from './credential-config-modal'
+import { availableCredentials } from '@/utils/credentials-registry'
 
 interface NodeConfigModalProps {
     node: Node | null
@@ -52,7 +54,22 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
     const [nodeData, setNodeData] = useState<Node | null>(node)
     const [activeTab, setActiveTab] = useState('parameters')
     const [credentials, setCredentials] = useState<CredentialRecord[]>([])
+    const [showCredentialModal, setShowCredentialModal] = useState(false)
+    const [selectedCredentialType, setSelectedCredentialType] = useState<string | null>(null)
     const workflowCtx = useWorkflowCtx();
+    
+    const fetchCredentials = useCallback(async () => {
+        console.log("in get credentials", { nodeData, node })
+        if (!nodeData?.data?.credentials || nodeData?.data?.credentials?.length === 0) {
+            console.log("in")
+            return
+        }
+
+        const creds = await getNodeCredentials(nodeData?.data?.credentials || [], projectId);
+        console.log("credentials", creds)
+        setCredentials(creds);
+    }, [nodeData, node, projectId])
+    
     const handleParameterChange = (key: string, value: string | number | boolean) => {
         if (!nodeData) return
         workflowCtx.nodeParameterChangeHandler(key, value);
@@ -103,21 +120,8 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
     }, [node])
 
     useEffect(() => {
-        const fetchCredentials = async () => {
-            console.log("in get credentials", { nodeData, node })
-            if (!nodeData?.data?.credentials || nodeData?.data?.credentials?.length === 0) {
-                console.log("in")
-                return <p className="text-sm text-gray-500">No credentials required for this node.</p>
-            }
-
-            const creds = await getNodeCredentials(nodeData?.data?.credentials || [], projectId);
-            console.log("credentials", creds)
-            setCredentials(creds);
-        }
-
         fetchCredentials();
-
-    }, [projectId, nodeData, isOpen, node])
+    }, [fetchCredentials, isOpen])
 
     if (!node) return null
 
@@ -137,7 +141,15 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
 
     const handleCreateCredential = (credentialType: string) => {
         console.log("Create new credential for", credentialType)
-        // TODO: Open credential creation modal
+        setSelectedCredentialType(credentialType)
+        setShowCredentialModal(true)
+    }
+
+    const handleCredentialModalClose = () => {
+        setShowCredentialModal(false)
+        setSelectedCredentialType(null)
+        // Refresh credentials after closing the modal
+        fetchCredentials()
     }
 
     const renderProperty = (property: unknown) => {
@@ -382,6 +394,20 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                     </div>
                 </div>
             </DialogContent>
+            
+            {selectedCredentialType && (
+                <CredentialConfigModal
+                    isOpen={showCredentialModal}
+                    onClose={handleCredentialModalClose}
+                    credentialType={{
+                        id: selectedCredentialType,
+                        displayName: availableCredentials.find(c => c.name === selectedCredentialType)?.displayName || selectedCredentialType,
+                        icon: "🔧",
+                        properties: availableCredentials.find(c => c.name === selectedCredentialType)?.properties || []
+                    }}
+                    projectId={projectId || ''}
+                />
+            )}
         </Dialog>
     )
 }

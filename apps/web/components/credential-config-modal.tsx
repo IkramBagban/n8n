@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { X } from "lucide-react"
+import { useState, useEffect } from "react"
+import { X, Edit2, Check } from "lucide-react"
 import {
     Dialog,
     DialogContent,
@@ -9,6 +9,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { INodeProperties } from "../../../packages/nodes-base/types"
 import { FieldRenderer } from './field-renderer'
@@ -34,12 +35,48 @@ export function CredentialConfigModal({
     const [credentialData, setCredentialData] = useState<Record<string, string | number | boolean>>({})
     const [credentialName, setCredentialName] = useState(`${credentialType.displayName} account`)
     const [isSaving, setIsSaving] = useState(false)
+    const [isEditingName, setIsEditingName] = useState(false)
+    const [tempCredentialName, setTempCredentialName] = useState('')
+
+    useEffect(() => {
+        if (isOpen) {
+            setCredentialName(`${credentialType.displayName} account`)
+            setIsEditingName(false)
+            setTempCredentialName('')
+        }
+    }, [isOpen, credentialType.displayName])
 
     const handleFieldChange = (fieldName: string, value: string | number | boolean) => {
         setCredentialData(prev => ({
             ...prev,
             [fieldName]: value
         }))
+    }
+
+    const handleStartEditingName = () => {
+        setTempCredentialName(credentialName)
+        setIsEditingName(true)
+    }
+
+    const handleSaveCredentialName = () => {
+        if (tempCredentialName.trim()) {
+            setCredentialName(tempCredentialName.trim())
+        }
+        setIsEditingName(false)
+        setTempCredentialName('')
+    }
+
+    const handleCancelEditingName = () => {
+        setIsEditingName(false)
+        setTempCredentialName('')
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleSaveCredentialName()
+        } else if (e.key === 'Escape') {
+            handleCancelEditingName()
+        }
     }
 
     const renderField = (property: INodeProperties) => {
@@ -94,6 +131,8 @@ export function CredentialConfigModal({
     const handleClose = () => {
         setCredentialData({})
         setCredentialName(`${credentialType.displayName} account`)
+        setIsEditingName(false)
+        setTempCredentialName('')
         onClose()
     }
 
@@ -105,10 +144,52 @@ export function CredentialConfigModal({
                         <div className="w-10 h-10 flex items-center justify-center text-xl bg-blue-50 rounded-lg">
                             {credentialType.icon}
                         </div>
-                        <div>
-                            <DialogTitle className="text-xl font-semibold">
-                                {credentialName}
-                            </DialogTitle>
+                        <div className="flex-1 min-w-0">
+                            {isEditingName ? (
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        value={tempCredentialName}
+                                        onChange={(e) => setTempCredentialName(e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                        onBlur={handleSaveCredentialName}
+                                        className="text-xl font-semibold border-0 shadow-none p-0 h-auto focus-visible:ring-0 bg-transparent"
+                                        autoFocus
+                                        style={{ outline: 'none', boxShadow: 'none' }}
+                                    />
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleSaveCredentialName}
+                                            className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+                                        >
+                                            <Check className="w-3 h-3" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleCancelEditingName}
+                                            className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 group">
+                                    <DialogTitle className="text-xl font-semibold cursor-pointer" onClick={handleStartEditingName}>
+                                        {credentialName}
+                                    </DialogTitle>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleStartEditingName}
+                                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
+                                    >
+                                        <Edit2 className="w-3 h-3" />
+                                    </Button>
+                                </div>
+                            )}
                             <p className="text-sm text-gray-500">{credentialType.displayName}</p>
                         </div>
                     </div>
