@@ -19,6 +19,7 @@ import { CredentialsSection } from './credentials-section'
 import { PropertyRenderer } from './property-renderer'
 import { CredentialConfigModal } from './credential-config-modal'
 import { availableCredentials } from '@/utils/credentials-registry'
+import { NodeJsonOutput } from './node-json-output'
 
 interface NodeConfigModalProps {
     node: Node | null
@@ -50,14 +51,20 @@ interface NodeProperty {
     [key: string]: unknown;
 }
 
+
+
+
 export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: NodeConfigModalProps) {
     const [nodeData, setNodeData] = useState<Node | null>(node)
     const [activeTab, setActiveTab] = useState('parameters')
     const [credentials, setCredentials] = useState<CredentialRecord[]>([])
     const [showCredentialModal, setShowCredentialModal] = useState(false)
     const [selectedCredentialType, setSelectedCredentialType] = useState<string | null>(null)
+
+
     const workflowCtx = useWorkflowCtx();
-    
+    const nodeOutput = workflowCtx.getJsonOutputById(isOpen ? node.id : null);
+    console.log("nodeOutput ---> ", nodeOutput)
     const fetchCredentials = useCallback(async () => {
         console.log("in get credentials", { nodeData, node })
         if (!nodeData?.data?.credentials || nodeData?.data?.credentials?.length === 0) {
@@ -69,7 +76,8 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
         console.log("credentials", creds)
         setCredentials(creds);
     }, [nodeData, node, projectId])
-    
+
+
     const handleParameterChange = (key: string, value: string | number | boolean) => {
         if (!nodeData) return
         workflowCtx.nodeParameterChangeHandler(key, value);
@@ -170,7 +178,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent
-                className="!max-w-none !w-[35vw] !h-[90vh] p-0 overflow-hidden flex flex-col"
+                className="!max-w-none !w-[65vw] !h-[90vh] p-0 overflow-hidden flex flex-col"
                 showCloseButton={false}
             >
                 <DialogHeader className="flex flex-row items-center justify-between p-6 border-b bg-white flex-shrink-0">
@@ -196,19 +204,17 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                 </DialogHeader>
 
                 <div className="flex flex-1 h-full min-h-0">
-                    {/* Left Panel - Test Section */}
-                    {/* <div className="w-2/5 border-r flex flex-col bg-gray-50">
+                    {/* <div className="w-2/6 border-r flex flex-col bg-gray-50">
                         <div className="p-6 border-b bg-white">
                             <h3 className="font-semibold text-gray-900 mb-3">
                                 Test Webhook
                             </h3>
                             <Button className="bg-red-500 hover:bg-red-600 text-white w-full mb-4">
-                                <Play className="w-4 h-4 mr-2" />
                                 Listen for test event
                             </Button>
                             <p className="text-sm text-gray-600">
                                 Click the button above to start listening for webhook events.
-                                Once you receive a test event, you'll see the data here.
+                                Once you receive a test event, you will see the data here.
                             </p>
                         </div>
 
@@ -226,7 +232,6 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                         </div>
                     </div> */}
 
-                    {/* Right Panel - Configuration */}
                     <div className="flex-1 flex flex-col min-h-0">
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
                             <TabsList className="grid w-[50%] grid-cols-2 mx-6 mt-6 mb-0 flex-shrink-0" >
@@ -369,11 +374,15 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                             </div>
                         </Tabs>
                     </div>
+
+                    <div className="w-2/5 border-r flex flex-col bg-gray-50">
+                        <NodeJsonOutput output={nodeOutput} />
+                    </div>
                 </div>
 
                 <div className="border-t p-6 bg-gray-50 flex items-center justify-end">
                     {/* <div className="flex items-center gap-2 text-sm text-gray-600"> */}
-                        {/* <span className="text-yellow-600">💡</span>
+                    {/* <span className="text-yellow-600">💡</span>
                         <span>Tip: Use the test button to validate your webhook configuration</span> */}
                     {/* </div> */}
                     <div className="flex items-center gap-3">
@@ -394,7 +403,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                     </div>
                 </div>
             </DialogContent>
-            
+
             {selectedCredentialType && (
                 <CredentialConfigModal
                     isOpen={showCredentialModal}

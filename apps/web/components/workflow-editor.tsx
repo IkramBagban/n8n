@@ -29,9 +29,9 @@ import Link from 'next/link';
 import { useWorkflowEditor } from '@/hooks/useWorkflowEditor';
 import { WorkflowSidebar, type NodeItem } from '@/components/workflow-sidebar';
 import { NodeConfigModal } from '@/components/node-config-modal';
+import { ExecutionOutputPanel } from '@/components/execution-output-panel';
 import { nodeTypes } from '@/utils/nodes-types';
 import { Node } from '@/lib/types';
-import axios from 'axios';
 import { useWorkflowCtx } from '@/store/workflow/workflow-context';
 
 interface ExecutionMessage {
@@ -43,6 +43,7 @@ interface ExecutionMessage {
     message?: string;
     nodeStatus?: 'executing' | 'success' | 'failed';
     response?: any;
+    json?: Record<string, any>
 }
 
 interface NodeExecutionState {
@@ -84,6 +85,8 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     const [isExecuting, setIsExecuting] = useState(false);
     const [isEditingWorkflowName, setIsEditingWorkflowName] = useState(false);
     const [tempWorkflowName, setTempWorkflowName] = useState('');
+    const [isOutputPanelOpen, setIsOutputPanelOpen] = useState(false);
+    const [executionOutput, setExecutionOutput] = useState<unknown>(null);
 
     // Reset workflow name editing state when workflowData changes
     useEffect(() => {
@@ -226,7 +229,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
     const handleSave = async () => {
         setIsSaving(true);
-        const toastId = toast.loading('Saving workflow...');    
+        const toastId = toast.loading('Saving workflow...');
 
         try {
             await saveWorkflow();
@@ -315,6 +318,11 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 console.log("Workflow execution completed successfully", executionLogs);
                 setIsExecuting(false);
                 eventSource.close();
+                workflowCtx.setJsonOutput(parsedData.json);
+                
+                setExecutionOutput(parsedData.json);
+                setIsOutputPanelOpen(true);
+                
                 toast.success('Workflow executed successfully! ✅', {
                     duration: 4000,
                 });
@@ -323,6 +331,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
                 setIsExecuting(false);
                 eventSource.close();
+                workflowCtx.setJsonOutput(parsedData.json);
 
                 let errorMessage = 'Unknown error occurred';
                 if (parsedData.message) {
@@ -530,6 +539,14 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                         )}
 
                         <div className="flex items-center gap-2">
+                            <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setIsOutputPanelOpen(true)}
+                                disabled={!executionOutput}
+                            >
+                                Output
+                            </Button>
                             <Button variant="outline" size="sm">
                                 Share
                             </Button>
@@ -615,6 +632,13 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 isOpen={isNodeModalOpen}
                 onClose={handleNodeModalClose}
                 onSave={handleNodeSave}
+            />
+
+            <ExecutionOutputPanel
+                isOpen={isOutputPanelOpen}
+                onClose={() => setIsOutputPanelOpen(false)}
+                executionData={executionOutput}
+                nodeTitle={selectedNode?.data?.name || 'Execution Result'}
             />
         </div>
     );

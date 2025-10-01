@@ -8,6 +8,7 @@ interface Workflow { workflowId: string, nodes: Node[], edges: Edge[] }
 export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const [workflow, setWorkflow] = useState<Workflow>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const [jsonOutput, setJsonOutput] = useState<Record<string, any>>(null);
 
   const getSelectedNode = () => {
     if (workflow.nodes?.length < 1) return null
@@ -69,6 +70,10 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     })
   }
 
+  const getJsonOutputById = (nodeId) => {
+    if (!jsonOutput) return null
+    return jsonOutput[nodeId] || null
+  }
   const value = {
     addWorkflow,
     addNode, getSelectedNode, removeNode,
@@ -78,7 +83,9 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     setSelectedNodeId,
     nodeParameterChangeHandler,
     setNodes,
-    changePropertyOfNode
+    changePropertyOfNode,
+    setJsonOutput,
+    getJsonOutputById
   }
   return <WorkflowContext.Provider value={value}>{children}</WorkflowContext.Provider>
 };
