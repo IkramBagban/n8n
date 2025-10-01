@@ -6,6 +6,7 @@ import '@xyflow/react/dist/style.css';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 import {
     Breadcrumb,
@@ -19,7 +20,10 @@ import {
     User,
     Github,
     Layers,
-    Plus
+    Plus,
+    Edit2,
+    Check,
+    X
 } from 'lucide-react';
 import Link from 'next/link';
 import { useWorkflowEditor } from '@/hooks/useWorkflowEditor';
@@ -78,6 +82,14 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     const [executionLogs, setExecutionLogs] = useState<ExecutionMessage[]>([]);
     const [nodeExecutionStates, setNodeExecutionStates] = useState<NodeExecutionState>({});
     const [isExecuting, setIsExecuting] = useState(false);
+    const [isEditingWorkflowName, setIsEditingWorkflowName] = useState(false);
+    const [tempWorkflowName, setTempWorkflowName] = useState('');
+
+    // Reset workflow name editing state when workflowData changes
+    useEffect(() => {
+        setIsEditingWorkflowName(false);
+        setTempWorkflowName('');
+    }, [workflowData?.id]);
 
     const workflowCtx = useWorkflowCtx()
 
@@ -350,6 +362,41 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         }
     };
 
+    const handleStartEditingWorkflowName = () => {
+        if (workflowData?.name) {
+            setTempWorkflowName(workflowData.name);
+            setIsEditingWorkflowName(true);
+        }
+    };
+
+    const handleSaveWorkflowName = async () => {
+        if (!tempWorkflowName.trim() || !workflowData) return;
+        
+        try {
+            await updateWorkflowData({ name: tempWorkflowName.trim() });
+            setIsEditingWorkflowName(false);
+            toast.success('Workflow name updated successfully');
+        } catch (error) {
+            console.error('Error updating workflow name:', error);
+            toast.error('Failed to update workflow name');
+        }
+    };
+
+    const handleCancelEditingWorkflowName = () => {
+        setIsEditingWorkflowName(false);
+        setTempWorkflowName('');
+    };
+
+    const handleWorkflowNameKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSaveWorkflowName();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            handleCancelEditingWorkflowName();
+        }
+    };
+
     const getProjectIcon = (project: { type?: string }) => {
         if (project?.type === 'personal') {
             return <User className="w-4 h-4" />;
@@ -410,9 +457,49 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                                     </BreadcrumbItem>
                                     <BreadcrumbSeparator />
                                     <BreadcrumbItem>
-                                        <BreadcrumbPage className="font-medium text-gray-900">
-                                            {workflowData.name}
-                                        </BreadcrumbPage>
+                                        <div className="flex items-center group">
+                                            {isEditingWorkflowName ? (
+                                                <div className="flex items-center gap-1">
+                                                    <Input
+                                                        value={tempWorkflowName}
+                                                        onChange={(e) => setTempWorkflowName(e.target.value)}
+                                                        onKeyDown={handleWorkflowNameKeyDown}
+                                                        className="h-6 text-sm font-medium text-gray-900 border-none shadow-none p-0 bg-transparent focus-visible:ring-1 focus-visible:ring-blue-500"
+                                                        autoFocus
+                                                    />
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={handleSaveWorkflowName}
+                                                        className="h-6 w-6 p-0 hover:bg-green-100"
+                                                    >
+                                                        <Check className="h-3 w-3 text-green-600" />
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={handleCancelEditingWorkflowName}
+                                                        className="h-6 w-6 p-0 hover:bg-red-100"
+                                                    >
+                                                        <X className="h-3 w-3 text-red-600" />
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <BreadcrumbPage className="font-medium text-gray-900">
+                                                        {workflowData.name}
+                                                    </BreadcrumbPage>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={handleStartEditingWorkflowName}
+                                                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100"
+                                                    >
+                                                        <Edit2 className="h-3 w-3 text-gray-500" />
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </BreadcrumbItem>
                                 </BreadcrumbList>
                             </Breadcrumb>
