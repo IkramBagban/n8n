@@ -20,7 +20,7 @@ export function WelcomeSection({ userName = "Ikram" }: WelcomeSectionProps) {
           icon={<FileIcon className="w- 12 h-12 text-gray-400" />}
           title="Start from scratch"
           description="Create a new workflow from the beginning"
-          href="/home/workflows/new"
+          href="/workflow/new"
         />
         
         <WorkflowCard

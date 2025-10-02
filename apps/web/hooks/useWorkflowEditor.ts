@@ -158,7 +158,7 @@ export const useWorkflowEditor = ({
         edges,
         active: workflowData?.active || false,
         tags: workflowData?.tags || [],
-        projectId: workflowData?.projectId || projectId,
+        ...(workflowData?.projectId || projectId ? { projectId: workflowData?.projectId || projectId } : {}),
       };
 
       let response;

@@ -7,17 +7,10 @@ export default function NewWorkflowPage() {
   const searchParams = useSearchParams();
   const projectId = searchParams.get('projectId');
 
-  if (!projectId) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-gray-500">Project ID is required to create a new workflow</div>
-      </div>
-    );
-  }
-
+  // projectId is optional - if not provided, workflow will be created in personal project
   return (
     <WorkflowEditor 
-      projectId={projectId}
+      projectId={projectId || undefined}
       isNewWorkflow={true}
     />
   );

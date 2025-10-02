@@ -31,19 +31,6 @@ import {
 import { Button } from "@/components/ui/button"
 import axios from "axios"
 
-const navigationItems = [
-  {
-    title: "Overview",
-    href: "/home/workflows",
-    icon: Home,
-  },
-  {
-    title: "Personal",
-    href: "/home/personal",
-    icon: User,
-  },
-]
-
 const adminItems = [
   {
     title: "Admin Panel",
@@ -96,11 +83,25 @@ export function AppSidebar() {
   const [projects, setProjects] = React.useState(null);
   const [isCreatingProject, setIsCreatingProject] = React.useState(false);
 
+  const getNavigationItems = () => [
+    {
+      title: "Overview",
+      href: "/home/workflows",
+      icon: Home,
+    },
+    // {
+    //   title: "Personal",
+    //   href: "/home/personal",
+    //   icon: User,
+    // },
+  ];
+
   React.useEffect(() => {
     const fetchProjects = async () => {
       try {
         const response = await axios.get('/api/rest/projects');
-        setProjects(response.data?.data);
+        const allProjects = response.data?.data || [];
+        setProjects(allProjects);
       }
       catch (error) {
         console.error('Error fetching projects:', error);
@@ -124,7 +125,7 @@ export function AppSidebar() {
       const newProject = response.data.data;
       console.log("Created project:", newProject);
 
-      setProjects((prevProjects: any[] | null) => [...(prevProjects || []), newProject]);
+      setProjects((prevProjects) => [...(prevProjects || []), newProject]);
 
       router.push(`/projects/${newProject.id}`);
     } catch (error) {
@@ -150,7 +151,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {navigationItems.map((item) => (
+              {getNavigationItems().map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
@@ -184,11 +185,7 @@ export function AppSidebar() {
                   asChild
                 >
                   <Link href={`/projects/${project.id}`} className="flex items-center gap-3">
-                    {project.type === 'personal' ? (
-                      <User className="w-4 h-4" />
-                    ) : (
-                      <Layers className="w-4 h-4" />
-                    )}
+                    <Layers className="w-4 h-4" />
                     <span className="truncate">{project.name}</span>
                   </Link>
                 </Button>

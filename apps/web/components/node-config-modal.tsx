@@ -405,7 +405,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                         icon: "🔧",
                         properties: availableCredentials.find(c => c.name === selectedCredentialType)?.properties || []
                     }}
-                    projectId={projectId || ''}
+                    projectId={projectId || undefined}
                 />
             )}
         </Dialog>

@@ -23,7 +23,7 @@ interface CredentialConfigModalProps {
         icon: string
         properties: INodeProperties[]
     }
-    projectId: string
+    projectId?: string
 }
 
 export function CredentialConfigModal({
@@ -98,7 +98,7 @@ export function CredentialConfigModal({
                 name: credentialName,
                 type: credentialType.id,
                 data: credentialData,
-                projectId
+                ...(projectId ? { projectId } : {})
             }
 
             console.log("Payload", payload)

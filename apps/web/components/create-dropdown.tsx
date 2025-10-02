@@ -13,10 +13,10 @@ export function CreateDropdown() {
     const [isCredentialModalOpen, setIsCredentialModalOpen] = useState(false)
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
-    const { projectId } = useParams() as { projectId: string }
+    const params = useParams()
+    const projectId = params?.projectId as string | undefined
 
-    // # todo
-    // if(!project) then i should create in personal project
+    // If no projectId, workflows and credentials will be created in personal project
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -33,7 +33,7 @@ export function CreateDropdown() {
 
     return (
         <>
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative" ref={dropdownRef}>    
                 <Button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
@@ -47,7 +47,7 @@ export function CreateDropdown() {
                     <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                         <div className="py-1">
                             <Link
-                                href={`/workflow/new?projectId=${projectId}`}
+                                href={projectId ? `/workflow/new?projectId=${projectId}` : `/workflow/new`}
                                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
                                 onClick={() => setIsDropdownOpen(false)}
                             >

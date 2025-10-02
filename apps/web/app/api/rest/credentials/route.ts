@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import prismaClient from "@repo/db";
 import { authOptions } from "@/lib/auth";
+import { getOrCreatePersonalProject } from "@/lib/project-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,13 +14,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, type, data, projectId } = body;
+    const { name, type, data } = body;
+    let { projectId } = body;
 
-    if (!name || !type || !data || !projectId) {
+    if (!name || !type || !data) {
       return NextResponse.json(
-        { error: "Missing required fields: name, type, data, projectId" },
+        { error: "Missing required fields: name, type, data" },
         { status: 400 }
       );
+    }
+
+    if (!projectId) {
+      const personalProject = await getOrCreatePersonalProject(session.user.id);
+      projectId = personalProject.id;
+      console.log(`Using personal project ${projectId} for new credential`);
     }
 
     const project = await prismaClient.project.findFirst({
