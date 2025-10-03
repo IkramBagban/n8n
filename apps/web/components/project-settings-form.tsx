@@ -6,14 +6,15 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Layers } from "lucide-react"
 import axios from "axios"
-import { useRouter } from "next/navigation"
+import { useProject } from "@/store/project/project-context"
+import toast from "react-hot-toast"
 
 interface ProjectSettingsFormProps {
     project: {
         id: string
         name: string
         description: string | null
-        icon?: any
+        icon?: { type: string; value: string } | null
     }
 }
 
@@ -23,25 +24,28 @@ export function ProjectSettingsForm({ project }: ProjectSettingsFormProps) {
         description: project.description || "",
     })
     const [isLoading, setIsLoading] = useState(false)
-    const router = useRouter()
+    const { updateProject } = useProject()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
 
         try {
-            const response = await axios.put(`/api/rest/projects/${project.id}`, {
+            await axios.put(`/api/rest/projects/${project.id}`, {
                 name: formData.name,
                 description: formData.description || null,
                 icon: project.icon,
             })
 
-            alert("Project updated successfully!")
+            updateProject(project.id, {
+                name: formData.name,
+                description: formData.description || null,
+            })
 
-            router.refresh()
+            toast.success("Project updated successfully!")
         } catch (error) {
             console.error("Error updating project:", error)
-            alert("Failed to update project. Please try again.")
+            toast.error("Failed to update project. Please try again.")
         } finally {
             setIsLoading(false)
         }

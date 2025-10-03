@@ -1,13 +1,8 @@
-import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardTabs } from "@/components/dashboard-tabs"
 import { notFound } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
-import { ChevronDown } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { projectInstance } from "@/actions/projects"
 import { ProjectSettingsForm } from "@/components/project-settings-form"
+import { ProjectHeader } from "@/components/project-header"
 
 interface ProjectSettingsPageProps {
     params: Promise<{
@@ -18,7 +13,7 @@ interface ProjectSettingsPageProps {
 export default async function ProjectSettingsPage({ params }: ProjectSettingsPageProps) {
     const { projectId } = await params
 
-    const project = await projectInstance.getProjectById(projectId)
+        const project = await projectInstance.getProjectById(projectId)
 
     if (!project) {
         notFound()
@@ -49,18 +44,28 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
 
     return (
         <div className="flex flex-col min-h-full bg-gray-50">
-            <DashboardHeader
-                title={project.name}
-                subtitle={project.description}
+            <ProjectHeader
+                projectId={project?.id}
+                initialProject={{
+                    name: project?.name,
+                    description: project?.description
+                }}
             />
             <DashboardTabs tabs={projectTabs} defaultValue="project-settings" />
             <main className="flex-1 p-6">
                 <div className="max-w-4xl">
                     <div className="p-6 space-y-8">
 
-                        <ProjectSettingsForm project={project} />
+                        <ProjectSettingsForm project={{
+                            id: project?.id,
+                            name: project?.name,
+                            description: project?.description,
+                            icon: project?.icon && typeof project?.icon === 'object' && project?.icon !== null && 'type' in project.icon 
+                                ? project.icon as { type: string; value: string }
+                                : null
+                        }} />
 
-                        <div>
+                        {/* <div>
                             <h3 className="text-lg font-medium text-gray-900 mb-4">Project members</h3>
 
                             <div className="mb-4">
@@ -115,7 +120,7 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
                             <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
                                 Delete this project
                             </Button>
-                        </div>
+                        </div> */}
 
                     </div>
                 </div>

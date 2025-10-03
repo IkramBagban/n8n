@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { useProject } from "@/store/project/project-context"
 import {
   Sidebar,
   SidebarContent,
@@ -79,8 +80,8 @@ const adminItems = [
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const { projects, setProjects, addProject } = useProject()
 
-  const [projects, setProjects] = React.useState(null);
   const [isCreatingProject, setIsCreatingProject] = React.useState(false);
 
   const getNavigationItems = () => [
@@ -109,7 +110,7 @@ export function AppSidebar() {
     }
 
     fetchProjects();
-  }, [])
+  }, [setProjects])
 
   const handleAddProject = async () => {
     setIsCreatingProject(true);
@@ -125,10 +126,10 @@ export function AppSidebar() {
       const newProject = response.data.data;
       console.log("Created project:", newProject);
 
-      setProjects((prevProjects) => [...(prevProjects || []), newProject]);
+      addProject(newProject);
 
-      router.push(`/projects/${newProject.id}`);
-    } catch (error) {
+      router.push(`/projects/${newProject.id}/settings`);
+    } catch (error) { 
       console.error('Error creating project:', error);
       alert('Failed to create project. Please try again.');
     } finally {
