@@ -20,7 +20,7 @@ interface CreateCredentialModalProps {
     projectId?: string
 }
 
-export function CreateCredentialModal({ isOpen, onClose, projectId = "cmfjrtqt40001v7oc8j6a4rz2" }: CreateCredentialModalProps) {
+export function CreateCredentialModal({ isOpen, onClose, projectId }: CreateCredentialModalProps) {
     const [searchQuery, setSearchQuery] = useState("")
     const [selectedCredential, setSelectedCredential] = useState<ICredentialType | null>(null)
     const [showConfigModal, setShowConfigModal] = useState(false)

@@ -24,24 +24,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!projectId) {
-      const personalProject = await getOrCreatePersonalProject(session.user.id);
-      projectId = personalProject.id;
-      console.log(`Using personal project ${projectId} for new credential`);
-    }
+    // Check if projectId is truly provided and valid
+    if (!projectId || projectId === 'undefined' || projectId.trim() === '') {
+      console.log('Reason: projectId is', projectId);
+      try {
+        const personalProject = await getOrCreatePersonalProject(session.user.id);
+        projectId = personalProject.id;
+      } catch (error) {
+        console.error('Error getting/creating personal project:', error);
+        return NextResponse.json(
+          { error: "Failed to create personal project" },
+          { status: 500 }
+        );
+      }
+    } else {
+      const project = await prismaClient.project.findFirst({
+        where: {
+          id: projectId,
+          userId: session.user.id,
+        },
+      });
 
-    const project = await prismaClient.project.findFirst({
-      where: {
-        id: projectId,
-        userId: session.user.id,
-      },
-    });
-
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found or access denied" },
-        { status: 404 }
-      );
+      if (!project) {
+        return NextResponse.json(
+          { error: "Project not found or access denied" },
+          { status: 404 }
+        );
+      }
     }
 
     const credential = await prismaClient.credentials.create({
