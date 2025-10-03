@@ -2,6 +2,7 @@ import { predefinedNodesTypes } from "@repo/nodes-base/utils/constants";
 import type { Edge, Node } from "./utils/types";
 import { createRedisClient } from "./lib/redis";
 import { NodeOutput } from "./lib/node-output";
+import { updateExecutionStatus } from "./utils/helpers";
 
 const publisher = await createRedisClient();
 
@@ -39,9 +40,12 @@ export class Engine {
 
   async run() {
     console.log("executing workflow");
+    await updateExecutionStatus(this.executionId!, "Running");
+
     const triggerNode = this.nodes.find((node) => node.type === "trigger");
 
     if (!triggerNode) {
+      await updateExecutionStatus(this.executionId!, "Error", true);
       await publishDataToPubSub({
         executionId: this.executionId,
         status: "Failed",
@@ -53,15 +57,17 @@ export class Engine {
     try {
       // this will xecute the entire tree startin from trigger node
       await this.executeNode(triggerNode);
-    
+
       console.info("Workflow execution completed successfully.");
+      await updateExecutionStatus(this.executionId!, "Success", true);
       await publishDataToPubSub({
         executionId: this.executionId,
         json: this.nodeOutput.json,
         status: "Success",
         message: "Workflow execution finished",
-      });
+      }); 
     } catch (error) {
+      await updateExecutionStatus(this.executionId!, "Error", true);
       console.error("Workflow execution failed:", error);
     }
   }
