@@ -194,11 +194,21 @@ export interface INodeTypeDescription extends INodeTypeBaseDescription {
   //   hints?: NodeHint[];
   // __loadOptionsMethods?: string[]; // only for validation during build
 }
+
+export interface SupplyData {
+  success: boolean;
+  model?: any; 
+  error?: string;
+}
+
 export interface INodeType {
-  nodeType?: any; // have to see this 
+  nodeType?: any; // have to see this
 
   description: INodeTypeDescription;
-  // supplyData?(this: ISupplyDataFunctions, itemIndex: number): Promise<SupplyData>;
+  supplyData?(params: {
+    parameters: any;
+    credentialId: string;
+  }): Promise<SupplyData>;
   // execute?(this: IExecuteFunctions): Promise<NodeOutput>;
   // /**
   //  * A function called when a node receives a chat message. Allows it to react

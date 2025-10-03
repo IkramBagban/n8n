@@ -45,26 +45,30 @@ export class Engine {
       await publishDataToPubSub({
         executionId: this.executionId,
         status: "Failed",
-
         message: "There is no trigger node",
       });
-
       return;
     }
 
-    await this.executeNode(triggerNode);
-  }
-
-  async executeNode(currentNode: Node | null) {
-    if (!currentNode) {
-      console.info("No more nodes to execute. Workflow finished.");
+    try {
+      // this will xecute the entire tree startin from trigger node
+      await this.executeNode(triggerNode);
+    
+      console.info("Workflow execution completed successfully.");
       await publishDataToPubSub({
         executionId: this.executionId,
         json: this.nodeOutput.json,
         status: "Success",
         message: "Workflow execution finished",
       });
+    } catch (error) {
+      console.error("Workflow execution failed:", error);
+    }
+  }
 
+  async executeNode(currentNode: Node | null) {
+    if (!currentNode) {
+      // retrning when there wn't be any node in any subtree
       return;
     }
 
@@ -77,12 +81,10 @@ export class Engine {
 
     await publishDataToPubSub({
       ...commonPayload,
-      status: "Workflow started",
-      message: "Workflow execution started",
+      status: "Running",
+      message: `Executing node: ${currentNode.name}`,
       nodeStatus: NodeStatus.executing,
     });
-
-    let nextNode;
 
     try {
       // Skip model nodes if they somehow end up in main execution flow
@@ -97,12 +99,19 @@ export class Engine {
           nodeStatus: NodeStatus.success,
         });
 
-        nextNode = this.getConnectedNode(currentNode);
+        const nextNode = this.getConnectedNode(currentNode);
         await this.executeNode(nextNode);
         return;
       }
 
       await this.executeNodeByType(currentNode, commonPayload);
+
+      const childNodes = this.getConnectedChildNodes(currentNode);
+      if (childNodes.length > 0) {
+        for (const child of childNodes) {
+          await this.executeNode(child.node);
+        }
+      }
     } catch (error: any) {
       console.error(`Error executing node ${currentNode.name}:`, error);
 
@@ -118,7 +127,7 @@ export class Engine {
       await publishDataToPubSub({
         ...commonPayload,
         status: "Failed",
-        message: `Node execution failed: ${errorMessage}`,
+        message: `Workflow failed at node '${currentNode.name}': ${errorMessage}`,
         json: this.nodeOutput.json,
         response: {
           error: errorMessage,
@@ -126,7 +135,9 @@ export class Engine {
         },
         nodeStatus: NodeStatus.failed,
       });
-      return;
+
+      // re throiwn to stop all the node execution if one node fails
+      throw error;
     }
   }
 
@@ -135,15 +146,12 @@ export class Engine {
 
     switch (currentNode.name) {
       case "manualTrigger":
-        nextNode = this.getConnectedNode(currentNode);
-
         await publishDataToPubSub({
           ...commonPayload,
           status: "Running",
           nodeStatus: NodeStatus.success,
         });
 
-        await this.executeNode(nextNode);
         break;
 
       case "agent":
@@ -155,33 +163,12 @@ export class Engine {
           );
         }
 
-        // Get the connected model (required for agent)
         const suppliedModelResult = await this.getConnectedModel(currentNode);
 
         if (!suppliedModelResult.success) {
           throw new Error(
             suppliedModelResult.error || "Failed to connect to model"
           );
-        }
-
-        // Agent MUST have a model connected
-        if (!suppliedModelResult.model) {
-          throw new Error(
-            "Problem in node 'AI Agent'\nA Chat Model sub-node must be connected and enabled"
-          );
-        }
-
-        const agentResponse = await agent.type.execute({
-          parameters: currentNode.parameters,
-          model: suppliedModelResult.model,
-        });
-
-        if (!agentResponse || !agentResponse.success) {
-          const errorMessage =
-            agentResponse?.error ||
-            agentResponse?.message ||
-            "Agent node execution failed";
-          throw new Error(errorMessage);
         }
 
         const modelCommonPayload = {
@@ -196,6 +183,17 @@ export class Engine {
           message: "Model processing agent's prompt",
           nodeStatus: NodeStatus.executing,
         });
+
+        const agentResponse = await agent.type.execute({
+          parameters: currentNode.parameters,
+          model: suppliedModelResult.model,
+        });
+
+        if (!agentResponse || !agentResponse.success) {
+          const errorMessage =
+            agentResponse?.error || "Agent node execution failed";
+          throw new Error(errorMessage);
+        }
 
         this.nodeOutput.addOutput({
           nodeId: currentNode.id,
@@ -213,9 +211,11 @@ export class Engine {
           response: { data: finalResult },
           nodeStatus: NodeStatus.success,
         });
-
-        nextNode = this.getConnectedNode(currentNode);
-        await this.executeNode(nextNode);
+        await publishDataToPubSub({
+          ...modelCommonPayload,
+          status: "Running",
+          nodeStatus: NodeStatus.success,
+        });
         break;
 
       case "telegram":
@@ -234,9 +234,7 @@ export class Engine {
 
         if (!response || !response.success) {
           const errorMessage =
-            response?.error ||
-            response?.message ||
-            "Telegram node execution failed";
+            response?.error || "Telegram node execution failed";
           throw new Error(errorMessage);
         }
 
@@ -252,9 +250,6 @@ export class Engine {
           nodeName: currentNode.name,
           json: response.data,
         });
-
-        nextNode = this.getConnectedNode(currentNode);
-        await this.executeNode(nextNode);
         break;
 
       case "resend":
@@ -274,8 +269,9 @@ export class Engine {
         console.log("Response from resend node:", resp);
 
         if (!resp || !resp.success) {
+          const errorResponse = resp as any;
           const errorMessage =
-            resp?.error || resp?.message || "Resend node execution failed";
+            errorResponse?.error || "Resend node execution failed";
           throw new Error(errorMessage);
         }
 
@@ -291,9 +287,6 @@ export class Engine {
           nodeName: currentNode.name,
           json: resp,
         });
-
-        nextNode = this.getConnectedNode(currentNode);
-        await this.executeNode(nextNode);
         break;
 
       default:
@@ -314,7 +307,9 @@ export class Engine {
   }
 
   // Find connected child nodes (nodes connected to agent's bottom handles)
-  getConnectedChildNodes(parentNode: Node) {
+  getConnectedChildNodes(
+    parentNode: Node
+  ): { node: Node; handleType: string | null }[] {
     const parentNodeId = parentNode.id;
     const childEdges = this.edges.filter(
       (edge) => edge.source === parentNodeId // here i should add sourceHandle wala conndition as well, but currently i haven't added that in reactflow node
@@ -324,15 +319,25 @@ export class Engine {
       .map((edge) => {
         const childNode = this.nodes.find((node) => node.id === edge.target);
         return childNode
-          ? { node: childNode, handleType: edge.sourceHandle }
+          ? { node: childNode, handleType: edge.sourceHandle || null }
           : null;
       })
-      .filter(Boolean);
+      .filter(
+        (child): child is { node: Node; handleType: string | null } => !!child
+      );
+
+    // const childNodes = childEdges
+    //   .map((edge) => {
+    //     const childNode = this.nodes.find((node) => node.id === edge.target);
+    //     return childNode
+    //       ? { node: childNode, handleType: edge.sourceHandle || null }
+    //       : null;
+    //   })
+    //   .filter(Boolean);
 
     return childNodes;
   }
 
-  // Get the connected model instance from the agent node (required - one model must be connected)
   async getConnectedModel(agentNode: Node) {
     const childNodes = this.getConnectedChildNodes(agentNode);
     const modelNodes = childNodes.filter(
@@ -342,8 +347,12 @@ export class Engine {
     );
 
     if (modelNodes.length === 0) {
-      // No model connected - this is required for agents
-      return { success: true, model: null }; // Let the calling code handle the validation
+      return {
+        success: false,
+        model: null,
+        error:
+          "Problem in node 'AI Agent'\nA Chat Model sub-node must be connected and enabled",
+      };
     }
 
     if (modelNodes.length > 1) {
@@ -368,11 +377,18 @@ export class Engine {
       return { success: false, error: `Unsupported model type: ${modelName}` };
     }
 
-    // Get the model instance supplied by the model node
-    console.log("model name:", modelNode.name);
-    const llmModel = predefinedNodesTypes[`nodes-base.${modelName}`]; // #Todo: satisfy it's type
+    const llmModel =
+      predefinedNodesTypes[
+        `nodes-base.${modelName}` as keyof typeof predefinedNodesTypes
+      ];
 
-    const modelSupplyResult = await llmModel.type.supplyData({
+    // // I am doing this to prevent model node from being executed in main flow
+    const nodesWithoutModelNode = this.nodes.filter(
+      (node) => node.id !== modelNode.id
+    );
+    this.nodes = nodesWithoutModelNode;
+
+    const modelSupplyResult = await (llmModel.type as any).supplyData({
       parameters: modelNode.parameters,
       credentialId: modelNode.credentialId,
     });

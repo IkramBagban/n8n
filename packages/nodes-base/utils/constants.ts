@@ -8,26 +8,20 @@ import { LmChatGoogleGemini } from "../nodes/llms/LmChatGoogleGemini/LmChatGoogl
 export const predefinedNodesTypes = {
   "nodes-base.manualTrigger": {
     type: new ManualTrigger(),
-    sourcePath: "",
   },
   "nodes-base.webhookTrigger": {
     type: new Webhook(),
-    sourcePath: "",
   },
   "nodes-base.telegram": {
     type: new Telegram(),
-    sourcePath: "",
   },
   "nodes-base.resend": {
     type: new Resend(),
-    sourcePath: "",
   },
   "nodes-base.agent": {
     type: new Agent(),
-    sourcePath: "",
   },
   "nodes-base.lmChatGoogleGemini": {
     type: new LmChatGoogleGemini(),
-    sourcePath: "",
   },
 };
