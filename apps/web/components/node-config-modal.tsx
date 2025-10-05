@@ -20,6 +20,7 @@ import { PropertyRenderer } from './property-renderer'
 import { CredentialConfigModal } from './credential-config-modal'
 import { availableCredentials } from '@/utils/credentials-registry'
 import { NodeJsonOutput } from './node-json-output'
+import { NodeInputsPanel } from './node-inputs-panel'
 
 interface NodeConfigModalProps {
     node: Node | null
@@ -58,9 +59,16 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
     const [showCredentialModal, setShowCredentialModal] = useState(false)
     const [selectedCredentialType, setSelectedCredentialType] = useState<string | null>(null)
 
+    const [nodeInputs, setNodeInputs] = useState<Record<string, unknown>>({})
 
     const workflowCtx = useWorkflowCtx();
     const nodeOutput = workflowCtx?.getJsonOutputById(isOpen ? node.id : null);
+
+    useEffect(() => {
+        if (!node?.id) return
+        const inputs = workflowCtx.getInputsForNode(node.id)
+        setNodeInputs(inputs)
+    }, [setNodeInputs, workflowCtx, node?.id])
 
     const fetchCredentials = useCallback(async () => {
         if (!nodeData?.data?.credentials || nodeData?.data?.credentials?.length === 0) {
@@ -69,7 +77,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
 
         const creds = await getNodeCredentials(nodeData?.data?.credentials || [], projectId);
         setCredentials(creds);
-    }, [nodeData, node, projectId])
+    }, [nodeData, projectId])
 
 
     const handleParameterChange = (key: string, value: string | number | boolean) => {
@@ -149,7 +157,6 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
     const handleCredentialModalClose = () => {
         setShowCredentialModal(false)
         setSelectedCredentialType(null)
-        // Refresh credentials after closing the modal
         fetchCredentials()
     }
 
@@ -171,7 +178,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent
-                className="!max-w-none !w-[65vw] !h-[90vh] p-0 overflow-hidden flex flex-col"
+                className="!max-w-none !w-[90vw] !h-[90vh] p-0 overflow-hidden flex flex-col"
                 showCloseButton={false}
             >
                 <DialogHeader className="flex flex-row items-center justify-between p-6 border-b bg-white flex-shrink-0">
@@ -197,35 +204,15 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                 </DialogHeader>
 
                 <div className="flex flex-1 h-full min-h-0">
-                    {/* <div className="w-2/6 border-r flex flex-col bg-gray-50">
-                        <div className="p-6 border-b bg-white">
-                            <h3 className="font-semibold text-gray-900 mb-3">
-                                Test Webhook
-                            </h3>
-                            <Button className="bg-red-500 hover:bg-red-600 text-white w-full mb-4">
-                                Listen for test event
-                            </Button>
-                            <p className="text-sm text-gray-600">
-                                Click the button above to start listening for webhook events.
-                                Once you receive a test event, you will see the data here.
-                            </p>
-                        </div>
 
-                        <div className="p-4 border-b">
-                            <button className="flex items-center justify-between w-full text-left">
-                                <span className="text-sm text-gray-700">When will this node trigger my flow?</span>
-                                <span className="text-gray-400">▼</span>
-                            </button>
-                        </div>
+                    <div className="w-2/5 border-r flex flex-col bg-gray-50">
+                        <NodeInputsPanel
+                            inputs={nodeInputs}
+                            nodeId={nodeData?.id || undefined}
+                        />
+                    </div>
 
-                        <div className="flex-1 p-4">
-                            <div className="text-center text-gray-500 mt-8">
-                                <p className="text-sm">Logs</p>
-                            </div>
-                        </div>
-                    </div> */}
-
-                    <div className="flex-1 flex flex-col min-h-0">
+                    <div className="w-2/5 flex flex-col min-h-0">
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
                             <TabsList className="grid w-[50%] grid-cols-2 mx-6 mt-6 mb-0 flex-shrink-0" >
                                 <TabsTrigger value="parameters" className="flex items-center gap-2" >
@@ -235,12 +222,10 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                                 <TabsTrigger value="settings" disabled>Settings</TabsTrigger>
                             </TabsList>
 
-                            {/* Scrollable Content Area */}
                             <div className="flex-1 overflow-hidden min-h-0">
                                 <TabsContent value="parameters" className="h-full m-0">
                                     <div className="h-full overflow-y-auto px-6 py-4">
                                         <div className="space-y-6">
-                                            {/* Credentials Section */}
                                             <CredentialsSection
                                                 credentials={nodeData?.data?.credentials || []}
                                                 availableCredentials={credentials}
@@ -326,8 +311,6 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                                                     ))}
                                                 </div>
                                             </div>
-
-                                            {/* Add some bottom padding */}
                                             <div className="h-4"></div>
                                         </div>
                                     </div>
@@ -367,15 +350,14 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
                     </div>
 
                     <div className="w-2/5 border-r flex flex-col bg-gray-50">
-                        <NodeJsonOutput output={nodeOutput} />
+                        <div className="flex-1 overflow-hidden min-h-0">
+                            <NodeJsonOutput output={nodeOutput} />
+                        </div>
                     </div>
                 </div>
 
                 <div className="border-t p-6 bg-gray-50 flex items-center justify-end">
-                    {/* <div className="flex items-center gap-2 text-sm text-gray-600"> */}
-                    {/* <span className="text-yellow-600">💡</span>
-                        <span>Tip: Use the test button to validate your webhook configuration</span> */}
-                    {/* </div> */}
+
                     <div className="flex items-center gap-3">
                         <Button variant="outline" onClick={onClose}>
                             Cancel

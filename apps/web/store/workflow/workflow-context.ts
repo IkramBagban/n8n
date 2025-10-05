@@ -21,21 +21,25 @@ type WorkflowContextType = {
   setNodes: (nodes: Node[]) => void;
   setJsonOutput: (jsonOutput: Record<string, any>) => void;
   getJsonOutputById: (nodeId) => any;
+  getInputsForNode: (nodeId: string) => Record<string, any>;
 };
 
 export const WorkflowContext = createContext<WorkflowContextType>({
-  addWorkflow: (workflow: Workflow) => { },
-  addNode: () => { },
+  addWorkflow: (workflow: Workflow) => {},
+  addNode: () => {},
   getSelectedNode: () => null,
-  removeNode: () => { },
+  removeNode: () => {},
   selectedNodeId: null,
-  setSelectedNodeId: () => { },
-  changePropertyOfNode: (nodeId, key, value) => { },
+  setSelectedNodeId: () => {},
+  changePropertyOfNode: (nodeId, key, value) => {},
   workflow: { workflowId: "", nodes: [], edges: [], jsonOutput: {} },
-  nodeParameterChangeHandler: (key, value) => { },
-  setNodes: (nodes: Node[]) => { },
-  setJsonOutput: (jsonOutput: Record<string, any>) => { },
-  getJsonOutputById: (nodeId) => null
+  nodeParameterChangeHandler: (key, value) => {},
+  setNodes: (nodes: Node[]) => {},
+  setJsonOutput: (jsonOutput: Record<string, any>) => {},
+  getJsonOutputById: (nodeId) => null,
+  getInputsForNode: (nodeId) => {
+    return {};
+  },
 });
 
 export const useWorkflowCtx = () => useContext(WorkflowContext);

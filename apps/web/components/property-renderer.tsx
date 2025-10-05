@@ -28,10 +28,41 @@ interface PropertyRendererProps {
     onChange: (value: string | number | boolean) => void
 }
 
+const handleDragOver = (ev: React.DragEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    ev.preventDefault();
+    ev.currentTarget.classList.add('ring-2', 'ring-blue-500');
+};
+
+const handleDragLeave = (ev: React.DragEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    ev.currentTarget.classList.remove('ring-2', 'ring-blue-500');
+};
+
+const createDropHandler = (
+    currentValue: string | number | boolean,
+    onChange: (value: string | number | boolean) => void
+) => {
+    return (ev: React.DragEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        ev.preventDefault();
+        ev.currentTarget.classList.remove('ring-2', 'ring-blue-500');
+        const droppedData = ev.dataTransfer.getData("text");
+        console.log("Dropped expression:", droppedData);
+        
+        const currentVal = currentValue.toString();
+        const newValue = currentVal ? `${currentVal} ${droppedData}` : droppedData;
+        onChange(newValue);
+    };
+};
+
 export function PropertyRenderer({ property, value, onChange }: PropertyRendererProps) {
     if (!property) return null
 
     const currentValue = value || property.default || ''
+
+    const dragProps = {
+        onDragOver: handleDragOver,
+        onDragLeave: handleDragLeave,
+        onDrop: createDropHandler(currentValue, onChange),
+    };
 
     switch (property.type) {
         case 'notice':
@@ -70,12 +101,13 @@ export function PropertyRenderer({ property, value, onChange }: PropertyRenderer
                 <Input
                     placeholder={property.placeholder || ''}
                     value={currentValue.toString()}
+                    {...dragProps}
                     onChange={(e) => onChange(e.target.value)}
-                    className="mt-2"
+                    className="mt-2 transition-all"
                 />
             )
 
-        case 'number':
+        case 'number': // i haven't made it droppable yet, because ther is no property of type number yet in any node
             return (
                 <Input
                     type="number"
@@ -125,8 +157,9 @@ export function PropertyRenderer({ property, value, onChange }: PropertyRenderer
                 <Textarea
                     placeholder={property.placeholder || ''}
                     value={currentValue.toString()}
+                    {...dragProps}
                     onChange={(e) => onChange(e.target.value)}
-                    className="mt-2"
+                    className="mt-2 transition-all font-mono"
                     rows={property.rows || 3}
                 />
             )

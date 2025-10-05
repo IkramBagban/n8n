@@ -3,6 +3,7 @@ import type { Edge, Node } from "./utils/types";
 import { createRedisClient } from "./lib/redis";
 import { NodeOutput } from "./lib/node-output";
 import { updateExecutionStatus } from "./utils/helpers";
+import { ExpressionResolver } from "./utils/expression-resolver";
 
 const publisher = await createRedisClient();
 
@@ -25,6 +26,7 @@ export class Engine {
   nodes: Node[] = [];
   edges: Edge[] = [];
   nodeOutput: NodeOutput;
+  
   constructor(
     workflowId: string,
     executionId: string,
@@ -150,12 +152,27 @@ export class Engine {
   async executeNodeByType(currentNode: Node, commonPayload: any) {
     let nextNode;
 
+    const resolver = new ExpressionResolver(this.nodeOutput.getOutputsForResolver());
+    
+    const resolvedParameters = resolver.resolveParameters(
+      currentNode.parameters as Record<string, unknown>
+    );
+    
+    console.log('Original parameters:', currentNode.parameters);
+    console.log('Resolved parameters:', resolvedParameters);
+
     switch (currentNode.name) {
       case "manualTrigger":
         await publishDataToPubSub({
           ...commonPayload,
           status: "Running",
           nodeStatus: NodeStatus.success,
+        });
+
+        this.nodeOutput.addOutput({
+          nodeId: currentNode.id,
+          nodeName: currentNode.name,
+          json: currentNode.parameters,
         });
 
         break;
@@ -191,7 +208,7 @@ export class Engine {
         });
 
         const agentResponse = await agent.type.execute({
-          parameters: currentNode.parameters,
+          parameters: resolvedParameters,
           model: suppliedModelResult.model,
         });
 
@@ -234,7 +251,7 @@ export class Engine {
         }
 
         const response = await telegram.type.execute({
-          parameters: currentNode.parameters,
+          parameters: resolvedParameters,
           credentialId: currentNode.credentialId,
         });
 
@@ -268,7 +285,7 @@ export class Engine {
         }
 
         const resp = await resend.type.execute({
-          parameters: currentNode.parameters,
+          parameters: resolvedParameters,
           credentialId: currentNode.credentialId,
         });
 
