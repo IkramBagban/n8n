@@ -26,7 +26,7 @@ export class Engine {
   nodes: Node[] = [];
   edges: Edge[] = [];
   nodeOutput: NodeOutput;
-  
+
   constructor(
     workflowId: string,
     executionId: string,
@@ -67,7 +67,7 @@ export class Engine {
         json: this.nodeOutput.json,
         status: "Success",
         message: "Workflow execution finished",
-      }); 
+      });
     } catch (error) {
       await updateExecutionStatus(this.executionId!, "Error", true);
       console.error("Workflow execution failed:", error);
@@ -103,8 +103,8 @@ export class Engine {
         await publishDataToPubSub({
           ...commonPayload,
           status: "Running",
-          message: "Model node skipped - should be used by agent nodes",
-          nodeStatus: NodeStatus.success,
+          message: "Model node should be attached to an Agent node",
+          nodeStatus: NodeStatus.failed,
         });
 
         const nextNode = this.getConnectedNode(currentNode);
@@ -152,14 +152,18 @@ export class Engine {
   async executeNodeByType(currentNode: Node, commonPayload: any) {
     let nextNode;
 
-    const resolver = new ExpressionResolver(this.nodeOutput.getOutputsForResolver());
-    
+    const resolver = new ExpressionResolver(
+      this.nodeOutput.getOutputsForResolver()
+    );
+
     const resolvedParameters = resolver.resolveParameters(
       currentNode.parameters as Record<string, unknown>
     );
-    
-    console.log('Original parameters:', currentNode.parameters);
-    console.log('Resolved parameters:', resolvedParameters);
+
+    if (currentNode.name === "agent") {
+      console.log("Original parameters:", currentNode.parameters);
+      console.log("Resolved parameters:", resolvedParameters);
+    }
 
     switch (currentNode.name) {
       case "manualTrigger":
@@ -194,6 +198,12 @@ export class Engine {
           );
         }
 
+        // Get connected tools
+        const suppliedToolsResult = await this.getConnectedTools(currentNode);
+        const tools = suppliedToolsResult.tools || [];
+
+        console.log(`Agent executing with ${tools.length} tool(s)`);
+
         const modelCommonPayload = {
           nodeId: suppliedModelResult.modelNodeId,
           executionId: this.executionId,
@@ -203,14 +213,17 @@ export class Engine {
         await publishDataToPubSub({
           ...modelCommonPayload,
           status: "Running",
-          message: "Model processing agent's prompt",
+          message: `Model processing agent's prompt${tools.length > 0 ? ` with ${tools.length} tool(s)` : ""}`,
           nodeStatus: NodeStatus.executing,
         });
 
+        console.log("calling agent execute");
         const agentResponse = await agent.type.execute({
           parameters: resolvedParameters,
           model: suppliedModelResult.model,
+          tools: tools.length > 0 ? tools : undefined,
         });
+
 
         if (!agentResponse || !agentResponse.success) {
           const errorMessage =
@@ -218,14 +231,22 @@ export class Engine {
           throw new Error(errorMessage);
         }
 
+        // Store agent output with tool usage information
+        const agentOutputData = {
+          output: agentResponse.data?.output,
+          toolsUsed: agentResponse.data?.toolsUsed || 0,
+          toolCalls: agentResponse.data?.toolCalls || [],
+        };
+
         this.nodeOutput.addOutput({
           nodeId: currentNode.id,
           nodeName: currentNode.name,
-          json: { output: agentResponse.data?.output },
+          json: agentOutputData,
         });
+
         const finalResult = {
-          output: agentResponse.data?.output, // ai output it is
-          message: "Agent processed prompt using connected model",
+          ...agentOutputData,
+          message: `Agent processed prompt using connected model${agentResponse.data?.toolsUsed > 0 ? ` and ${agentResponse.data.toolsUsed} tool call(s)` : ""}`,
         };
 
         await publishDataToPubSub({
@@ -428,5 +449,81 @@ export class Engine {
         error: `Model ${modelNode.name} failed to supply: ${modelSupplyResult.error}`,
       };
     }
+  }
+
+  async getConnectedTools(agentNode: Node) {
+    const childNodes = this.getConnectedChildNodes(agentNode);
+    const toolNodes = childNodes.filter(
+      (child) =>
+        child?.handleType === "tool" || child?.node.name.includes("tool")
+    );
+
+    if (toolNodes.length === 0) {
+      // No tools connected - this is OK
+      return {
+        success: true,
+        tools: [],
+      };
+    }
+
+    console.log(`Found ${toolNodes.length} tool(s) connected to agent`);
+
+    const tools: any[] = [];
+    const toolNodeIds: string[] = [];
+
+    for (const toolChild of toolNodes) {
+      const toolNode = toolChild.node;
+      const toolName = toolNode.name;
+
+      if (
+        !Object.keys(predefinedNodesTypes).includes(`nodes-base.${toolName}`)
+      ) {
+        console.warn(`Unsupported tool type: ${toolName}`);
+        continue;
+      }
+
+      const toolType =
+        predefinedNodesTypes[
+          `nodes-base.${toolName}` as keyof typeof predefinedNodesTypes
+        ];
+
+      try {
+        console.log(`Loading tool ${toolName} with parameters:`, toolNode.parameters);
+        
+        const toolSupplyResult = await (toolType.type as any).supplyTool({
+          parameters: toolNode.parameters,
+        });
+
+        if (toolSupplyResult.success) {
+          console.log(`Tool supply result:`, {
+            name: toolSupplyResult.tool.name,
+            description: toolSupplyResult.tool.description?.substring(0, 50),
+          });
+          tools.push(toolSupplyResult.tool);
+          toolNodeIds.push(toolNode.id);
+          console.log(
+            `✓ Tool '${toolSupplyResult.tool.name}' loaded successfully`
+          );
+        } else {
+          console.warn(
+            `Failed to load tool ${toolName}: ${toolSupplyResult.error}`
+          );
+        }
+      } catch (error: any) {
+        console.error(`Error loading tool ${toolName}:`, error);
+      }
+    }
+
+    // Remove tool nodes from main execution flow
+    const nodesWithoutToolNodes = this.nodes.filter(
+      (node) => !toolNodeIds.includes(node.id)
+    );
+    this.nodes = nodesWithoutToolNodes;
+
+    return {
+      success: true,
+      tools,
+      toolNodeIds,
+    };
   }
 }
