@@ -1,5 +1,7 @@
+import { authOptions } from "@/lib/auth";
 import { createWorkflowSchema } from "@/utils/zod-schema";
 import prismaClient from "@repo/db";
+import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (
@@ -7,9 +9,14 @@ export const GET = async (
   { params }: { params: Promise<{ id: string }> }
 ) => {
   const { id: workflowId } = await params;
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const workflow = await prismaClient.workflow.findUnique({
-    where: { id: workflowId },
+    where: { id: workflowId, project: { userId: session.user.id } },
     include: { Node: true, Edge: true },
   });
 
@@ -18,7 +25,7 @@ export const GET = async (
   }
 
   const project = await prismaClient.project.findFirst({
-    where: { id: workflow.projectId },
+    where: { id: workflow.projectId, userId: session.user.id },
     select: { id: true, name: true, description: true, icon: true },
   });
 
@@ -57,60 +64,66 @@ export const PATCH = async (
       select: { id: true, name: true, description: true, icon: true },
     });
     // const [project, workflow] = await Promise.all([
-    const workflow = await prismaClient.$transaction(async (tx) => {
-      await tx.edge.deleteMany({
-        where: { workflowId },
-      });
+    const workflow = await prismaClient.$transaction(
+      async (tx) => {
+        await tx.edge.deleteMany({
+          where: { workflowId },
+        });
 
-      await tx.node.deleteMany({
-        where: { workflowId },
-      });
+        await tx.node.deleteMany({
+          where: { workflowId },
+        });
 
-      const updatedWorkflow = await tx.workflow.update({
-        where: { id: workflowId },
-        data: {
-          name,
-          active,
-          projectId,
-        },
-      });
+        const updatedWorkflow = await tx.workflow.update({
+          where: { id: workflowId },
+          data: {
+            name,
+            active,
+            projectId,
+          },
+        });
 
-      const createdNodes = await Promise.all(
-        nodes.map((node: any) =>
-          tx.node.create({
-            data: {
-              id: node.id,
-              name: node.name,
-              type: node.type,
-              parameters: node.parameters || {},
-              position: node.position || [0, 0],
-              credentialId: node.credentialId || null,
-              data: node.data || {},
-              workflowId,
-            },
-          })
-        )
-      );
+        const createdNodes = await Promise.all(
+          nodes.map((node: any) =>
+            tx.node.create({
+              data: {
+                id: node.id,
+                name: node.name,
+                type: node.type,
+                parameters: node.parameters || {},
+                position: node.position || [0, 0],
+                credentialId: node.credentialId || null,
+                data: node.data || {},
+                workflowId,
+              },
+            })
+          )
+        );
 
-      const createdEdges = await Promise.all(
-        edges.map((edge: any) =>
-          tx.edge.create({
-            data: {
-              id: edge.id,
-              source: edge.source,
-              target: edge.target,
-              workflowId,
-            },
-          })
-        )
-      );
+        const createdEdges = await Promise.all(
+          edges.map((edge: any) =>
+            tx.edge.create({
+              data: {
+                id: edge.id,
+                source: edge.source,
+                target: edge.target,
+                workflowId,
+              },
+            })
+          )
+        );
 
-      return {
-        ...updatedWorkflow,
-        Node: createdNodes,
-        Edge: createdEdges,
-      };
-    });
+        return {
+          ...updatedWorkflow,
+          Node: createdNodes,
+          Edge: createdEdges,
+        };
+      },
+      {
+        maxWait: 10000, // wait up to 10s for a transaction slot
+        timeout: 20000, // transaction lifetime = 20s
+      }
+    );
     // ]);
 
     const responsePayload = {

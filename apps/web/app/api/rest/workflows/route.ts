@@ -87,10 +87,16 @@ export const POST = async (req: NextRequest) => {
 export const GET = async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const projectId = searchParams.get("projectId");
+  const session = await getServerSession(authOptions);
+
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   if (projectId) {
     const projects = await prismaClient.project.findFirst({
-      where: { id: projectId },
+      where: { id: projectId, userId: userId },
       include: { workflows: true },
     });
 
@@ -98,6 +104,7 @@ export const GET = async (req: NextRequest) => {
   }
 
   const workflows = await prismaClient.workflow.findMany({
+    where: { project: { userId: userId } },
     include: {
       project: {
         select: {

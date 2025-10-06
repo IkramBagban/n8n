@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { FileIcon, BriefcaseIcon } from "lucide-react"
+// import { FileIcon, BriefcaseIcon } from "lucide-react"
 
 interface WelcomeSectionProps {
   userName?: string
@@ -14,7 +14,7 @@ export function WelcomeSection({ userName = "Ikram" }: WelcomeSectionProps) {
         </h2>
         <p className="text-gray-600">Create your first workflow</p>
       </div>
-      
+{/*       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-md w-full">
         <WorkflowCard
           icon={<FileIcon className="w- 12 h-12 text-gray-400" />}
@@ -29,7 +29,7 @@ export function WelcomeSection({ userName = "Ikram" }: WelcomeSectionProps) {
           description="Use one of our template workflows"
           href="/home/workflows/templates"
         />
-      </div>
+      </div> */}
     </div>
   )
 }

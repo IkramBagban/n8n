@@ -1,13 +1,22 @@
 "use server";
 
+import { authOptions } from "@/lib/auth";
 import { Workflow } from "@/lib/types";
 import prismaClient from "@repo/db";
+import { getServerSession } from "next-auth";
 
 export const getWorkflows = async (): Promise<{
   data: Workflow[];
   count: number;
 }> => {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return { data: [], count: 0 };
+  }
+  
   const workflows = await prismaClient.workflow.findMany({
+    where: { project: { userId: session.user.id } },
     include: {
       project: {
         select: {

@@ -321,7 +321,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 workflowCtx.setJsonOutput(parsedData.json);
 
                 setExecutionOutput(parsedData.json);
-                setIsOutputPanelOpen(true);
+                // setIsOutputPanelOpen(true);
 
                 toast.success('Workflow executed successfully! ✅', {
                     duration: 4000,
@@ -577,12 +577,12 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                         <button className="px-4 py-3 text-sm font-medium text-gray-900 border-b-2 border-gray-900">
                             Editor
                         </button>
-                        <button className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 cursor-not-allowed" disabled>
+                        {/* <button className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 cursor-not-allowed" disabled>
                             Executions
                         </button>
                         <button className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 cursor-not-allowed" disabled>
                             Evaluations
-                        </button>
+                        </button> */}
                     </div>
                 </div>
 

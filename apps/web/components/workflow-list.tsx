@@ -37,7 +37,7 @@ export function WorkflowList({ workflows, totalCount }: WorkflowListProps) {
 
     return (
         <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
+            {/* <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4 flex-1">
                     <div className="relative max-w-sm">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -56,7 +56,7 @@ export function WorkflowList({ workflows, totalCount }: WorkflowListProps) {
                         Filter
                     </Button>
                 </div>
-            </div>
+            </div> */}
 
             <div className="space-y-4">
                 {workflows.map((workflow) => (
@@ -78,16 +78,16 @@ export function WorkflowList({ workflows, totalCount }: WorkflowListProps) {
                                     </span>
                                     {workflow.project.type === 'personal' ? 'Personal' : workflow.project.name}
                                 </Badge>
-                                <div className="flex items-center gap-2">
+                                {/* <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-500">Inactive</span>
                                     <Switch />
-                                </div>
+                                </div> */}
                             </div>
-                            <div className="flex items-center gap-2">
+                            {/* <div className="flex items-center gap-2">
                                 <Button variant="ghost" size="sm">
                                     <MoreHorizontal className="w-4 h-4" />
                                 </Button>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 ))}

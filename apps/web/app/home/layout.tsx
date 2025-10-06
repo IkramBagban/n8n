@@ -62,7 +62,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 subtitle="All the workflows, credentials and executions you have access to"
             />
             <main className="flex-1 bg-gray-50">
-                <MetricsGrid metrics={metricsData} />
+                {/* <MetricsGrid metrics={metricsData} /> */}
 
                 <DashboardTabs tabs={dashboardTabs} />
                 {children}
