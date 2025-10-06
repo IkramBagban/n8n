@@ -163,7 +163,6 @@ export class Telegram implements INodeType {
     parameters,
     credentialId,
   }: any): Promise<{ success: boolean; data?: any; error?: string }> {
-    console.log("params -------> ", { parameters, credentialId });
     if (!parameters) {
       console.error("parameters are not provided");
       return { success: false, error: "parameters are not provided" };
@@ -182,14 +181,12 @@ export class Telegram implements INodeType {
       select: { data: true },
     }) as { data: { accessToken: string } } | null;
 
-    console.log("feteched credential ----> ", credential);
     const url = `https://api.telegram.org/bot${credential?.data?.accessToken}/sendMessage?chat_id=${parameters?.chatId}&text=${parameters.text}`;
     const response = await fetch(url);
     const data = (await response.json()) as any;
     if (!data?.ok) {
       return { success: false, error: "Bad Request" };
     }
-    console.log(JSON.stringify(data, null, 2));
     return { success: true, data };
   }
 }

@@ -4,6 +4,8 @@ import { Telegram } from "../nodes/Telegram/Telegram.node";
 import { Webhook } from "../nodes/Webhook/Webhook.node";
 import { Agent } from "../nodes/Agent/Agent.node";
 import { LmChatGoogleGemini } from "../nodes/llms/LmChatGoogleGemini/LmChatGoogleGemini.node";
+import { ToolCalculator } from "../nodes/tools/ToolCalculator/ToolCalculator.node";
+import { ToolDateTime } from "../nodes/tools/ToolDateTime/ToolDateTime.node";
 
 export const predefinedNodesTypes = {
   "nodes-base.manualTrigger": {
@@ -23,5 +25,11 @@ export const predefinedNodesTypes = {
   },
   "nodes-base.lmChatGoogleGemini": {
     type: new LmChatGoogleGemini(),
+  },
+  "nodes-base.toolCalculator": {
+    type: new ToolCalculator(),
+  },
+  "nodes-base.toolDateTime": {
+    type: new ToolDateTime(),
   },
 };

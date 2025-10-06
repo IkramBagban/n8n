@@ -6,7 +6,8 @@ type NodeGroupType =
   | "schedule"
   | "transform"
   | "trigger"
-  | "model";
+  | "model"
+  | "tools";
 
 export type ThemeIconColor =
   | "gray"
