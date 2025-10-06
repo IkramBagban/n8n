@@ -2,11 +2,13 @@
 
 import { Handle, Position } from "@xyflow/react";
 import { NodeExecutionIndicator } from "@/components/ui/node-spinner";
+import { NodeDeleteButton } from "@/components/ui/node-delete-button";
 
 interface ModelNodeData {
     label: string;
     executionStatus?: 'idle' | 'executing' | 'success' | 'failed';
     nodeType?: string;
+    onDelete?: (nodeId: string) => void;
     [key: string]: unknown;
 }
 
@@ -69,12 +71,14 @@ export function ModelNode({ data, id }: ModelNodeProps) {
     };
 
     return (
-        <div className="model-node relative flex justify-center items-center border-black/50">
+        <div className="model-node group relative flex justify-center items-center border-black/50">
             {executionStatus !== 'idle' && (
                 <div className="absolute -top-2 -right-2 z-10">
                     <NodeExecutionIndicator status={executionStatus} size="sm" />
                 </div>
             )}
+
+            <NodeDeleteButton nodeId={id} onDelete={data.onDelete} />
 
             <div className={`relative flex justify-center items-center rounded-full shadow-sm w-12 h-12 ${getBackgroundColor()}`}>
                 {getModelIcon()}

@@ -4,6 +4,7 @@ import { Handle, Position } from "@xyflow/react";
 import { NodeExecutionIndicator } from "@/components/ui/node-spinner";
 import { NodeIcon, INodeIcon } from "@/components/ui/node-icon";
 import { getNodeIcon } from "@/utils/node-registry";
+import { NodeDeleteButton } from "@/components/ui/node-delete-button";
 
 interface AgentNodeData {
     label: string;
@@ -11,6 +12,7 @@ interface AgentNodeData {
     isSelected?: boolean;
     itemCount?: number;
     nodeType?: string;
+    onDelete?: (nodeId: string) => void;
 }
 
 interface AgentNodeProps {
@@ -18,7 +20,7 @@ interface AgentNodeProps {
     id: string;
 }
 
-export function AgentNode({ data }: AgentNodeProps) {
+export function AgentNode({ data, id }: AgentNodeProps) {
     const executionStatus = data.executionStatus || "idle";
     const isSelected = data.isSelected || false;
 
@@ -27,30 +29,26 @@ export function AgentNode({ data }: AgentNodeProps) {
             const registryIcon = getNodeIcon(data.nodeType);
             if (registryIcon) return registryIcon;
         }
-        
-        // Default Agent icon
+
         return { type: 'lucide' as const, value: 'Bot', color: 'purple' };
     };
 
     return (
-        <div className={`agent-node relative flex justify-center items-center border-1 rounded-md bg-white shadow-sm w-35 h-12 ${isSelected ? 'border-green-400' : 'border-black/50'
+        <div className={`agent-node group relative flex justify-center items-center border-1 rounded-md bg-white shadow-sm w-35 h-12 ${isSelected ? 'border-green-400' : 'border-black/50'
             }`}>
             <div className="flex items-center gap-2">
-                <NodeIcon 
-                    icon={getAgentNodeIcon()} 
-                    size="md" 
+                <NodeIcon
+                    icon={getAgentNodeIcon()}
+                    size="md"
                     className="text-current"
                 />
                 <span className="font-medium">AI Agent</span>
             </div>
 
-            {/* <div className="absolute -top-2 -right-2 bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full border border-gray-300">
-                {itemCount} item
-                <Plus className="w-3 h-3 ml-1 inline" />
-            </div> */}
+            <NodeDeleteButton nodeId={id} onDelete={data.onDelete} />
 
             {executionStatus !== "idle" && (
-                <div className="absolute -top-3 -left-3 z-10">
+                <div className="absolute -top-3 -right-1 z-10">
                     <NodeExecutionIndicator status={executionStatus} size="sm" />
                 </div>
             )}
@@ -63,13 +61,13 @@ export function AgentNode({ data }: AgentNodeProps) {
                 </div>
             )}
 
-            <Handle 
-                type="target" 
+            <Handle
+                type="target"
                 position={Position.Left}
                 id="input"
             />
-            <Handle 
-                type="source" 
+            <Handle
+                type="source"
                 position={Position.Right}
                 id="output"
             />
@@ -88,32 +86,6 @@ export function AgentNode({ data }: AgentNodeProps) {
                     className="w-3 h-3 bg-purple-400 border-purple-500"
                 />
             </div>
-
-            {/* <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
-                <span className="text-[.3rem] text-gray-700">
-
-                    Memory
-                </span>
-                <Handle
-                    type="source"
-                    position={Position.Bottom}
-                    id="memory"
-                    className="w-3 h-3 bg-blue-400 border-blue-500"
-                />
-            </div>
-
-            <div className="absolute -bottom-4 right-1/4">
-                <span className="text-[.3rem] text-gray-700">
-
-                    Tool
-                </span>
-                <Handle
-                    type="source"
-                    position={Position.Bottom}
-                    id="tool"
-                    className="w-3 h-3 bg-orange-400 border-orange-500"
-                />
-            </div> */}
         </div>
     );
 }

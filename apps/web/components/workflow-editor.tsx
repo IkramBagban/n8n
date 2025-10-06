@@ -33,6 +33,7 @@ import { ExecutionOutputPanel } from '@/components/execution-output-panel';
 import { nodeTypes } from '@/utils/nodes-types';
 import { Node } from '@/lib/types';
 import { useWorkflowCtx } from '@/store/workflow/workflow-context';
+import { DeletableEdge } from '@/components/custom-edges/DeletableEdge';
 
 interface ExecutionMessage {
     nodeId?: string;
@@ -106,6 +107,41 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
             }
         }));
     }, [nodes, nodeExecutionStates]);
+
+    const handleDeleteEdge = useCallback((edgeId: string) => {
+        onEdgesChange([{ type: 'remove', id: edgeId }]);
+    }, [onEdgesChange]);
+
+    const handleDeleteNode = useCallback((nodeId: string) => {
+        onNodesChange([{ type: 'remove', id: nodeId }]);
+    }, [onNodesChange]);
+
+    const edgesWithDeleteHandler = useMemo(() => {
+        return edges.map(edge => ({
+            ...edge,
+            type: 'deletable',
+            data: {
+                ...edge.data,
+                onDelete: handleDeleteEdge
+            }
+        }));
+    }, [edges, handleDeleteEdge]);
+
+    // Prepare nodes with delete handler
+    const nodesWithDeleteHandler = useMemo(() => {
+        return nodesWithExecutionStatus.map(node => ({
+            ...node,
+            data: {
+                ...node.data,
+                onDelete: handleDeleteNode
+            }
+        }));
+    }, [nodesWithExecutionStatus, handleDeleteNode]);
+
+    // Define edge types
+    const edgeTypes = useMemo(() => ({
+        deletable: DeletableEdge,
+    }), []);
 
 
     const isValidConnection = useCallback((connection: { source: string; target: string; sourceHandle?: string; targetHandle?: string }) => {
@@ -589,9 +625,10 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 <div className="flex-1 relative">
                     <ReactFlow
                         onNodeDoubleClick={handleNodeDoubleClick}
-                        nodes={nodesWithExecutionStatus}
-                        edges={edges}
+                        nodes={nodesWithDeleteHandler}
+                        edges={edgesWithDeleteHandler}
                         nodeTypes={nodeTypes}
+                        edgeTypes={edgeTypes}
                         onNodesChange={onNodesChange}
                         onEdgesChange={onEdgesChange}
                         onConnect={onConnect}
