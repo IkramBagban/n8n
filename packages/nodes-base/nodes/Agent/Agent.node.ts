@@ -16,7 +16,8 @@ export class Agent implements INodeType {
       name: "AI Agent",
     },
     description:
-      "Generates an action plan and executes it. Can use external tools and models.",
+      // "Generates an action plan and executes it. Can use external tools and models.",
+      "Generates an action plan and executes it.",
     defaultVersion: 2.2,
 
     properties: [

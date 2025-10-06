@@ -63,12 +63,20 @@ export function AgentNode({ data }: AgentNodeProps) {
                 </div>
             )}
 
-            <Handle type="target" position={Position.Left} />
-            <Handle type="source" position={Position.Right} />
+            <Handle 
+                type="target" 
+                position={Position.Left}
+                id="input"
+            />
+            <Handle 
+                type="source" 
+                position={Position.Right}
+                id="output"
+            />
 
 
-            <div className="absolute -bottom-4 left-1/4">
-                <span className="text-[.3rem] text-gray-700">
+            <div className="absolute -bottom-4 left-15">
+                <span className="text-[.4rem] text-gray-700">
 
                     Chat Model
                 </span>
@@ -81,7 +89,7 @@ export function AgentNode({ data }: AgentNodeProps) {
                 />
             </div>
 
-            <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
+            {/* <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
                 <span className="text-[.3rem] text-gray-700">
 
                     Memory
@@ -105,7 +113,7 @@ export function AgentNode({ data }: AgentNodeProps) {
                     id="tool"
                     className="w-3 h-3 bg-orange-400 border-orange-500"
                 />
-            </div>
+            </div> */}
         </div>
     );
 }

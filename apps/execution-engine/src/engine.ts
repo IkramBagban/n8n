@@ -103,8 +103,8 @@ export class Engine {
         await publishDataToPubSub({
           ...commonPayload,
           status: "Running",
-          message: "Model node skipped - should be used by agent nodes",
-          nodeStatus: NodeStatus.success,
+          message: "Model node should be connected to an Agent node",
+          nodeStatus: NodeStatus.failed,
         });
 
         const nextNode = this.getConnectedNode(currentNode);

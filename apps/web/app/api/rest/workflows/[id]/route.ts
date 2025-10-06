@@ -107,6 +107,8 @@ export const PATCH = async (
                 id: edge.id,
                 source: edge.source,
                 target: edge.target,
+                sourceHandle: edge.sourceHandle || null,
+                targetHandle: edge.targetHandle || null,
                 workflowId,
               },
             })

@@ -19,7 +19,7 @@ export class Resend implements INodeType {
     },
     group: ["output"],
     version: [1, 1.1, 1.2],
-    subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
+    // subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
     description: "Send emails with Resend",
     defaults: {
       name: "Resend",
