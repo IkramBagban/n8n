@@ -1,0 +1,56 @@
+name: Engine-Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/execution-engine/**'
+      - 'packages/nodes-base/**'
+      - 'packages/db/**'
+      - '.github/workflows/vm/deploy-engine.yml'
+      - 'docker/Dockerfile.engine'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./docker/Dockerfile.engine
+          push: true
+          tags: |
+            ikrambagban/n8n-engine:${{ github.sha }}
+            ikrambagban/n8n-engine:latest
+
+      - name: Deploy to VM
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            docker pull ikrambagban/n8n-engine:${{ github.sha }}
+            docker network inspect n8n-network || docker network create n8n-network
+            docker stop n8n-engine || true
+            docker rm n8n-engine || true
+            docker run -d \
+              --name n8n-engine \
+              --restart always \
+              --network n8n-network \
+              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              -e REDIS_URL="${{ secrets.REDIS_URL }}" \
+              -e NODE_ENV="production" \
+              ikrambagban/n8n-engine:${{ github.sha }}
