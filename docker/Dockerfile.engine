@@ -10,7 +10,9 @@ COPY apps/execution-engine/package.json ./apps/execution-engine/package.json
 RUN bun install
 
 COPY apps/execution-engine ./apps/execution-engine
-COPY packages ./packages
+
+COPY packages/db ./packages/db
+COPY packages/nodes-base ./packages/nodes-base
 
 WORKDIR /usr/src/app/packages/db
 RUN bunx prisma generate

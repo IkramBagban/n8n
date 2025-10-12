@@ -13,6 +13,7 @@
       "name": "execution-engine",
       "dependencies": {
         "@ai-sdk/google": "^2.0.17",
+        "@repo/db": "*",
         "@repo/nodes-base": "*",
         "ai": "^5.0.56",
         "redis": "^5.8.2",
