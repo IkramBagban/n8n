@@ -2,7 +2,16 @@ name: Deploy Web
 on:
   push:
     branches:
-      - k8s-prod
+      - main
+    paths:
+      - "apps/web/**"
+      - "packages/nodes-base/**"
+      - "packages/db/**"
+      - "packages/eslint-config/**"
+      - "packages/typescript-config/**"
+      - ".github/workflows/deploy-web-to-vm.yml"
+      - "docker/Dockerfile.web"
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

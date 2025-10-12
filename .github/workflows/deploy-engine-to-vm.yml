@@ -8,7 +8,7 @@ on:
       - 'apps/execution-engine/**'
       - 'packages/nodes-base/**'
       - 'packages/db/**'
-      - '.github/workflows/vm/deploy-engine.yml'
+      - '.github/workflows/deploy-engine-to-vm.yml'
       - 'docker/Dockerfile.engine'
 
 jobs:
