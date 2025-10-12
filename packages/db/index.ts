@@ -13,7 +13,8 @@ const globalForPrisma = globalThis as unknown as {
 
 const prismaClient = globalForPrisma.prismaClient ?? prismaClientSingleton();
 
-export default prismaClient;
-
 if (process.env.NODE_ENV !== "production")
   globalForPrisma.prismaClient = prismaClient;
+
+export default prismaClient;
+export * from "@prisma/client";

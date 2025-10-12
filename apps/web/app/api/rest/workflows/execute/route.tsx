@@ -1,7 +1,7 @@
 import { redisClient } from "@/lib/redis";
-import prismaClient from "@repo/db";
-import { NextRequest, NextResponse } from "next/server";
-import { ExecutionStatus } from "@prisma/client";
+import prismaClient, { ExecutionStatus } from "@repo/db";
+import { NextRequest } from "next/server";
+
 
 const subscriber = redisClient.duplicate();
 await subscriber.connect();
