@@ -56,19 +56,48 @@ export const GET = async (req: NextRequest) => {
             // const subscriber = await redisClient.duplicate();
             console.log("Subscriber created");
 
-            await subscriber.subscribe(`execution-${executionId}`, (message) => {
-                console.log("Received message:");
-                controller.enqueue(encoder.encode(`data: ${message}\n\n`))
+            await subscriber.subscribe(`execution-${executionId}`, async (message) => {
+                try {
+                    console.log("Received message for execution:", executionId);
+                    controller.enqueue(encoder.encode(`data: ${message}\n\n`))
 
-                const parsedMessage = JSON.parse(message);
-                console.log("parsedMessage", parsedMessage);
-                if (parsedMessage.status === "Success") { // have to update this line.
-
-                    req.signal.addEventListener("abort", async () => {
-                        console.log("Request aborted by the client.")
-                        await subscriber.unsubscribe(`execution:${executionId}`);
+                    const parsedMessage = JSON.parse(message);
+                    console.log("parsedMessage", parsedMessage);
+                    
+                    // Clean up on completion or error
+                    if (parsedMessage.status === "Success" || parsedMessage.status === "Failed" || parsedMessage.status === "Error") {
+                        console.log(`Execution ${executionId} completed with status: ${parsedMessage.status}`);
+                        
+                        // Unsubscribe and close the stream
+                        await subscriber.unsubscribe(`execution-${executionId}`);
                         controller.close();
-                    })
+                        
+                        // Clean up old execution keys with TTL (after 5 minutes)
+                        setTimeout(async () => {
+                            try {
+                                const keys = await redisClient.keys(`exec:${executionId}:*`);
+                                if (keys.length > 0) {
+                                    await redisClient.del(keys);
+                                    console.log(`Cleaned up ${keys.length} Redis keys for execution ${executionId}`);
+                                }
+                            } catch (err) {
+                                console.error('Error cleaning up Redis keys:', err);
+                            }
+                        }, 5 * 60 * 1000); // 5 minutes
+                    }
+                } catch (err) {
+                    console.error('Error processing message:', err);
+                }
+            })
+            
+            // Handle client disconnect
+            req.signal.addEventListener("abort", async () => {
+                console.log("Request aborted by the client.")
+                try {
+                    await subscriber.unsubscribe(`execution-${executionId}`);
+                    controller.close();
+                } catch (err) {
+                    console.error('Error unsubscribing on abort:', err);
                 }
             })
 

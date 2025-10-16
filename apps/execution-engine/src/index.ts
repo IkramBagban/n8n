@@ -2,11 +2,15 @@ import prismaClient from "@repo/db";
 import { Engine } from "./engine";
 import { redisClient } from "./lib/redis";
 import type { Edge, Node } from "./utils/types";
+import { startCleanupJob } from "./utils/redis-cleanup";
 
 console.log("Hello via Bun!");
 
 const main = async () => {
   console.log("Execution Engine up and running!");
+  
+  // Start Redis cleanup job (runs every hour)
+  startCleanupJob(60 * 60 * 1000);
 
   while (true) {
     const job = await redisClient.brPop("execute-workflow", 0);

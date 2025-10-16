@@ -8,10 +8,20 @@ import { ExpressionResolver } from "./utils/expression-resolver";
 const publisher = await createRedisClient();
 
 const publishDataToPubSub = async (payload: Record<string, any>) => {
-  await publisher.publish(
-    `execution-${payload.executionId}`,
-    JSON.stringify({ ...payload })
-  );
+  try {
+    const channel = `execution-${payload.executionId}`;
+    const message = JSON.stringify({ ...payload });
+    
+    // Publish the message
+    await publisher.publish(channel, message);
+    
+    // Store message with TTL (expires after 1 hour) for debugging
+    const key = `exec:${payload.executionId}:${Date.now()}`;
+    await publisher.setEx(key, 3600, message);
+  } catch (error) {
+    console.error('Error publishing to Redis:', error);
+    // Don't throw - continue execution even if pub/sub fails
+  }
 };
 
 enum NodeStatus {
