@@ -10,7 +10,7 @@ export default function Home() {
 
   useEffect(() => {
     if (status === 'authenticated') {
-      router.replace('/home');
+      router.replace('/home/workflows');
     } else if (status === 'unauthenticated') {
       router.replace('/signin');
     }
