@@ -9,9 +9,9 @@ export const predefinedNodesTypes = {
   "nodes-base.manualTrigger": {
     type: new ManualTrigger(),
   },
-  "nodes-base.webhookTrigger": {
-    type: new Webhook(),
-  },
+  // "nodes-base.webhookTrigger": {
+  //   type: new Webhook(),
+  // },
   "nodes-base.telegram": {
     type: new Telegram(),
   },
