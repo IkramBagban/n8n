@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { signOut, useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { useProject } from "@/store/project/project-context"
 import {
@@ -17,8 +18,15 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   Home,
-  User,
   Settings,
   FileText,
   Variable,
@@ -27,7 +35,9 @@ import {
   Sparkles,
   ChevronDown,
   Plus,
-  Layers
+  Layers,
+  LogOut,
+  UserCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import axios from "axios"
@@ -80,6 +90,7 @@ const adminItems = [
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const { data: session } = useSession()
   const { projects, setProjects, addProject } = useProject()
 
   const [isCreatingProject, setIsCreatingProject] = React.useState(false);
@@ -236,17 +247,42 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-gray-200 p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-            N
-          </div>
-          <div className="flex-1">
-            <p className="text-sm text-gray-700 font-medium">ikram</p>
-          </div>
-          <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600 p-1">
-            <ChevronDown className="w-4 h-4" />
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="w-full justify-start p-2 h-auto hover:bg-gray-100">
+              <div className="flex items-center gap-3 w-full">
+                <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                  {session?.user?.name?.charAt(0).toUpperCase() || session?.user?.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm text-gray-700 font-medium truncate">
+                    {session?.user?.name || session?.user?.email || 'User'}
+                  </p>
+                  {session?.user?.email && session?.user?.name && (
+                    <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
+                  )}
+                </div>
+                <ChevronDown className="w-4 h-4 text-gray-400" />
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" side="top" className="w-56">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/home/profile')}>
+              <UserCircle className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+              onClick={() => signOut({ callbackUrl: '/signin' })}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarFooter>
     </Sidebar>
   )
