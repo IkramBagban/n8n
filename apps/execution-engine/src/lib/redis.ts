@@ -12,13 +12,16 @@ const createRedisClient = async () => {
         }
         // Exponential backoff: 100ms, 200ms, 400ms, ...
         return Math.min(retries * 100, 3000);
-      }
-    }
+      },
+      connectTimeout: 10000,
+    },
+    disableOfflineQueue: false,
   });
   
   client.on('error', (err) => console.error('Redis Client Error:', err));
   client.on('connect', () => console.log('Redis Client Connected'));
   client.on('reconnecting', () => console.log('Redis Client Reconnecting'));
+  client.on('ready', () => console.log('Redis Client Ready'));
   
   await client.connect();
   
