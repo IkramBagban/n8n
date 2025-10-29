@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Search, Plus, Key, MoreHorizontal, Calendar } from "lucide-react"
 import prismaClient from "@repo/db"
-import { authOptions } from "../../../lib/auth"
+import { authOptions } from "@/lib/auth"
+
 
 interface Credential {
     id: string

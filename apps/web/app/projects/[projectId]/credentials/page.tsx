@@ -8,7 +8,8 @@ import { Search, Plus, Key, MoreHorizontal } from "lucide-react"
 import { projectInstance } from "@/actions/projects"
 import { getServerSession } from "next-auth"
 import prismaClient from "@repo/db"
-import { authOptions } from "../../../../lib/auth"
+import { authOptions } from "@/lib/auth"
+
 
 
 interface ProjectCredentialsPageProps {
