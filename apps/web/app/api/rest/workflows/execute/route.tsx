@@ -52,64 +52,46 @@ export const GET = async (req: NextRequest) => {
             const channel = `execution-${executionId}`;
             console.log(`Subscribing to channel: ${channel}`);
             
-            let isSubscribed = false;
-            const subscriptionPromise = new Promise<void>((resolve) => {
-                subscriber.subscribe(channel, async (message) => {
-                    if (!isSubscribed) {
-                        isSubscribed = true;
-                        console.log(`✅ Subscription confirmed for ${channel}`);
-                        resolve();
-                    }
-                    
-                    try {
-                        console.log(`📨 Received message for ${executionId}`);
-                        controller.enqueue(encoder.encode(`data: ${message}\n\n`))
+            await subscriber.subscribe(channel, async (message) => {
+                try {
+                    console.log(`Received message for ${executionId}`);
+                    controller.enqueue(encoder.encode(`data: ${message}\n\n`))
 
-                        const parsedMessage = JSON.parse(message);
-                        console.log("parsedMessage", parsedMessage);
+                    const parsedMessage = JSON.parse(message);
+                    console.log("parsedMessage", parsedMessage);
+                    
+                    // Clean up on completion or error
+                    if (parsedMessage.status === "Success" || parsedMessage.status === "Failed" || parsedMessage.status === "Error") {
+                        console.log(`🏁 Workflow ${executionId} finished with status: ${parsedMessage.status}`);
                         
-                        // Clean up on completion or error
-                        if (parsedMessage.status === "Success" || parsedMessage.status === "Failed" || parsedMessage.status === "Error") {
-                            console.log(`Workflow ${executionId} finished with status: ${parsedMessage.status}`);
+                        // Wait a bit to ensure all messages are sent
+                        setTimeout(async () => {
+                            await subscriber.unsubscribe(channel);
+                            controller.close();
                             
-                            // Wait a bit to ensure all messages are sent
+                            // Clean up old execution keys with TTL (after 5 minutes)
                             setTimeout(async () => {
-                                await subscriber.unsubscribe(channel);
-                                controller.close();
-                                
-                                // Clean up old execution keys with TTL (after 5 minutes)
-                                setTimeout(async () => {
-                                    try {
-                                        const keys = await redisClient.keys(`exec:${executionId}:*`);
-                                        if (keys.length > 0) {
-                                            await redisClient.del(keys);
-                                            console.log(`Cleaned up ${keys.length} Redis keys for execution ${executionId}`);
-                                        }
-                                    } catch (err) {
-                                        console.error('Error cleaning up Redis keys:', err);
+                                try {
+                                    const keys = await redisClient.keys(`exec:${executionId}:*`);
+                                    if (keys.length > 0) {
+                                        await redisClient.del(keys);
+                                        console.log(`Cleaned up ${keys.length} Redis keys for execution ${executionId}`);
                                     }
-                                }, 5 * 60 * 1000); // 5 minutes
-                            }, 1000);
-                        }
-                    } catch (err) {
-                        console.error('Error processing message:', err);
+                                } catch (err) {
+                                    console.error('Error cleaning up Redis keys:', err);
+                                }
+                            }, 5 * 60 * 1000); // 5 minutes
+                        }, 1000);
                     }
-                });
+                } catch (err) {
+                    console.error('Error processing message:', err);
+                }
             });
 
-            // Wait for subscription to be confirmed (with timeout)
-            console.log(`⏳ Waiting for subscription confirmation...`);
-            await Promise.race([
-                subscriptionPromise,
-                new Promise(resolve => setTimeout(resolve, 2000)) // 2 second timeout
-            ]);
-
-            if (!isSubscribed) {
-                console.warn(`⚠️ Subscription not confirmed within timeout, proceeding anyway`);
-            }
-
-            // Additional safety delay for production networks
-            await new Promise(resolve => setTimeout(resolve, 500));
+            console.log(`Subscription confirmed for ${channel}`);
+            
+            // Small delay to ensure subscription is fully registered in Redis
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             console.log(` Pushing job to queue for execution ${executionId}`);
             await redisClient.lPush("execute-workflow", JSON.stringify({
