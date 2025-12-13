@@ -164,7 +164,7 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
         if (!property || typeof property !== 'object') return null
 
         const prop = property as NodeProperty
-        const currentValue = workflowCtx.getSelectedNode()?.parameters[prop?.name] || prop.default || ''
+        const currentValue = nodeData?.parameters[prop?.name] || prop.default || ''
 
         return (
             <PropertyRenderer
