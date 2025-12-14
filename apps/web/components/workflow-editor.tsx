@@ -337,7 +337,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                     }
 
                     toast.error(
-                        `❌ Node "${parsedData.nodeName || parsedData.nodeId}" failed:\n${errorMessage}`,
+                        `Node "${parsedData.nodeName || parsedData.nodeId}" failed:\n${errorMessage}`,
                         {
                             duration: 8000,
                             style: {
@@ -359,7 +359,7 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 setExecutionOutput(parsedData.json);
                 // setIsOutputPanelOpen(true);
 
-                toast.success('Workflow executed successfully! ✅', {
+                toast.success('Workflow executed successfully!', {
                     duration: 4000,
                 });
             } else if (parsedData.status === "Failed") {
@@ -369,25 +369,28 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 eventSource.close();
                 workflowCtx.setJsonOutput(parsedData.json);
 
-                let errorMessage = 'Unknown error occurred';
-                if (parsedData.message) {
-                    errorMessage = parsedData.message;
-                } else if (parsedData.response?.error) {
-                    errorMessage = typeof parsedData.response.error === 'string'
-                        ? parsedData.response.error
-                        : JSON.stringify(parsedData.response.error);
-                }
-
-                toast.error(
-                    `🚫 Workflow execution failed:\n${errorMessage}`,
-                    {
-                        duration: 8000,
-                        style: {
-                            maxWidth: '500px',
-                            whiteSpace: 'pre-line',
-                        },
+                // Only show workflow failure toast if we didn't just show a node failure toast
+                if (parsedData.nodeStatus !== 'failed') {
+                    let errorMessage = 'Unknown error occurred';
+                    if (parsedData.message) {
+                        errorMessage = parsedData.message;
+                    } else if (parsedData.response?.error) {
+                        errorMessage = typeof parsedData.response.error === 'string'
+                            ? parsedData.response.error
+                            : JSON.stringify(parsedData.response.error);
                     }
-                );
+
+                    toast.error(
+                        `Workflow execution failed:\n${errorMessage}`,
+                        {
+                            duration: 8000,
+                            style: {
+                                maxWidth: '500px',
+                                whiteSpace: 'pre-line',
+                            },
+                        }
+                    );
+                }
             }
         }
 
