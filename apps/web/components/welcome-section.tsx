@@ -1,16 +1,22 @@
 import { Button } from "@/components/ui/button"
+import { authOptions } from "@/lib/auth"
+import { getServerSession } from "next-auth"
+
 // import { FileIcon, BriefcaseIcon } from "lucide-react"
 
 interface WelcomeSectionProps {
   userName?: string
 }
 
-export function WelcomeSection({ userName = "Ikram" }: WelcomeSectionProps) {
+export async function WelcomeSection({ userName }: WelcomeSectionProps) {
+  const session = await getServerSession(authOptions)
+  const name = userName || session?.user?.name
+
   return (
     <div className="flex flex-col items-center justify-center py-16 px-6">
       <div className="text-center mb-8">
         <h2 className="text-xl font-medium text-gray-900 mb-2">
-          👋 Welcome {userName}!
+          Welcome{name ? ` ${name}` : ""}!
         </h2>
         <p className="text-gray-600">Create your first workflow</p>
       </div>
