@@ -11,15 +11,10 @@ const publishDataToPubSub = async (payload: Record<string, any>) => {
   try {
     const channel = `execution-${payload.executionId}`;
     const message = JSON.stringify({ ...payload });
-    
-    // Publish the message
+
     await publisher.publish(channel, message);
-    
-    // Store message with TTL (expires after 1 hour) for debugging
-    const key = `exec:${payload.executionId}:${Date.now()}`;
-    await publisher.setEx(key, 3600, message);
   } catch (error) {
-    console.error('Error publishing to Redis:', error);
+    console.error("Error publishing to Redis:", error);
     // Don't throw - continue execution even if pub/sub fails
   }
 };
@@ -36,7 +31,7 @@ export class Engine {
   nodes: Node[] = [];
   edges: Edge[] = [];
   nodeOutput: NodeOutput;
-  
+
   constructor(
     workflowId: string,
     executionId: string,
@@ -77,7 +72,7 @@ export class Engine {
         json: this.nodeOutput.json,
         status: "Success",
         message: "Workflow execution finished",
-      }); 
+      });
     } catch (error) {
       await updateExecutionStatus(this.executionId!, "Error", true);
       console.error("Workflow execution failed:", error);
@@ -162,14 +157,16 @@ export class Engine {
   async executeNodeByType(currentNode: Node, commonPayload: any) {
     let nextNode;
 
-    const resolver = new ExpressionResolver(this.nodeOutput.getOutputsForResolver());
-    
+    const resolver = new ExpressionResolver(
+      this.nodeOutput.getOutputsForResolver()
+    );
+
     const resolvedParameters = resolver.resolveParameters(
       currentNode.parameters as Record<string, unknown>
     );
-    
-    console.log('Original parameters:', currentNode.parameters);
-    console.log('Resolved parameters:', resolvedParameters);
+
+    console.log("Original parameters:", currentNode.parameters);
+    console.log("Resolved parameters:", resolvedParameters);
 
     switch (currentNode.name) {
       case "manualTrigger":
