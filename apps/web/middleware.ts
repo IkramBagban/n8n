@@ -10,9 +10,9 @@ export default withAuth(
     if (pathname === '/') {
       if (token) {
         return NextResponse.redirect(new URL('/home', req.url));
-      } else {
-        return NextResponse.redirect(new URL('/signin', req.url));
       }
+      // Allow unauthenticated users to visit the landing page
+      return NextResponse.next();
     }
     
     return NextResponse.next();
