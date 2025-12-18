@@ -1,10 +1,7 @@
-import { redisClient } from "@/lib/redis";
+import { redisClient, getSubscriber } from "@/lib/redis";
 import prismaClient, { ExecutionStatus } from "@repo/db";
 import { NextRequest } from "next/server";
 
-
-const subscriber = redisClient.duplicate();
-await subscriber.connect();
 
 // previously i was thinking I'll run unsave workflows, but now i think i'll not do that atleast for now.
 export const GET = async (req: NextRequest) => {
@@ -19,6 +16,9 @@ export const GET = async (req: NextRequest) => {
         const encoder = new TextEncoder();
         const stream = new ReadableStream({
             async start(controller) {
+                const subscriber = await getSubscriber();
+                let channel: string | null = null;
+
                 try {
 
                     let isClosed = false;
@@ -32,8 +32,20 @@ export const GET = async (req: NextRequest) => {
                             console.error('controller might already be closed:', e);
                         }
                     };
+
+                    const cleanup = async () => {
+                        try {
+                            if (channel && subscriber.isOpen) {
+                                await subscriber.unsubscribe(channel);
+                            }
+                        } catch (err) {
+                            console.error('Error cleaning up Redis subscriber:', err);
+                        }
+                    };
+
                     if (!workflowId) {
                         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: "workflowId is required" })}\n\n`))
+                        await cleanup();
                         safeClose();
                         return;
                     }
@@ -64,7 +76,7 @@ export const GET = async (req: NextRequest) => {
                     console.log("ExecutingID", executionId)
 
                     // Subscribe FIRST before pushing to queue
-                    const channel = `execution-${executionId}`;
+                    channel = `execution-${executionId}`;
                     console.log(`Subscribing to channel: ${channel}`);
 
                     await subscriber.subscribe(channel, async (message) => {
@@ -81,13 +93,8 @@ export const GET = async (req: NextRequest) => {
 
                                 // Wait a bit to ensure all messages are sent
                                 setTimeout(async () => {
-                                    try {
-                                        await subscriber.unsubscribe(channel);
-                                        safeClose();
-                                    } catch (err) {
-                                        console.error('Error cleaning up Redis keys:', err);
-                                    }
-
+                                    await cleanup();
+                                    safeClose();
                                 }, 1000);
                             }
                         } catch (err) {
@@ -109,17 +116,15 @@ export const GET = async (req: NextRequest) => {
                     // Handle client disconnect
                     req.signal.addEventListener("abort", async () => {
                         console.log(`Client disconnected for execution ${executionId}`)
-                        try {
-                            await subscriber.unsubscribe(channel);
-                            safeClose();
-                        } catch (err) {
-                            console.error('Error unsubscribing on abort:', err);
-                        }
+                        await cleanup();
+                        safeClose();
                     })
                 } catch (error) {
                     console.error("Error in stream start:", error);
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: "Internal Server Error" })}\n\n`))
-
+                    if (channel && subscriber.isOpen) {
+                        await subscriber.unsubscribe(channel);
+                    }
                 }
 
             }

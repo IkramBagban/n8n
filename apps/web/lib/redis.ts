@@ -38,4 +38,26 @@ const createRedisClient = async () => {
 
 const redisClient = await createRedisClient();
 
-export { createRedisClient, redisClient };
+let subscriber: typeof redisClient | null = null;
+
+const getSubscriber = async () => {
+  if (subscriber && subscriber.isOpen) {
+    return subscriber;
+  }
+
+  console.log('Creating new Redis Subscriber...');
+  subscriber = redisClient.duplicate();
+
+  subscriber.on('error', (err) => {
+    console.error('Redis Subscriber Error:', err);
+  });
+
+  subscriber.on('connect', () => console.log('Redis Subscriber Connected'));
+  subscriber.on('reconnecting', () => console.log('Redis Subscriber Reconnecting'));
+  subscriber.on('ready', () => console.log('Redis Subscriber Ready'));
+
+  await subscriber.connect();
+  return subscriber;
+};
+
+export { createRedisClient, redisClient, getSubscriber };
