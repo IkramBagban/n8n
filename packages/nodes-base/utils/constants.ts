@@ -24,4 +24,7 @@ export const predefinedNodesTypes = {
   "nodes-base.lmChatGoogleGemini": {
     type: new LmChatGoogleGemini(),
   },
+  "nodes-base.webhook": {
+    type: new Webhook(),
+  },
 };

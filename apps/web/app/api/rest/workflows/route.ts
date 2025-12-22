@@ -64,6 +64,24 @@ export const POST = async (req: NextRequest) => {
       }),
     ]);
 
+    const webhookNodes = nodes.filter((node: any) => node.name === "webhook");
+    if (webhookNodes.length > 0) {
+      const webhookData = webhookNodes.map((node: any) => {
+        const path = node.parameters.path as string;
+        const parts = path.split('/');
+        const webhookId = parts[parts.length - 1];
+        return {
+          webhookId,
+          workflowId: workflow.id
+        };
+      });
+
+      await prismaClient.webhook.createMany({
+        data: webhookData,
+        skipDuplicates: true
+      });
+    }
+
     const responsePayload = {
       ...workflow,
       homeProject: project,

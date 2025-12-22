@@ -63,6 +63,7 @@ model Workflow {
   Node       Node[]
   Edge       Edge[]
   executions Execution[]
+  webhooks   Webhook[]
 
   @@index([id])
   @@index([projectId])
@@ -169,4 +170,11 @@ model Execution {
 
   @@index([id])
   @@index([workflowId])
+}
+
+model Webhook {
+  webhookId  String @id @unique
+  workflowId String
+
+  workflow Workflow @relation(fields: [workflowId], references: [id])
 }

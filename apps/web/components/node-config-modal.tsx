@@ -126,7 +126,24 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
     }
 
     useEffect(() => {
-        setNodeData(node)
+        if (node) {
+            // Ensure parameters are initialized with defaults if missing
+            const initializedParameters = { ...node.parameters };
+            
+            if (node.data?.properties) {
+                Object.keys(node.data.properties).forEach(key => {
+                    const property = node.data.properties[key];
+                    if (initializedParameters[property.name] === undefined && property.default !== undefined) {
+                        initializedParameters[property.name] = property.default;
+                    }
+                });
+            }
+
+            setNodeData({
+                ...node,
+                parameters: initializedParameters
+            });
+        }
     }, [node])
 
     useEffect(() => {
@@ -214,12 +231,13 @@ export function NodeConfigModal({ node, isOpen, onClose, onSave, projectId }: No
 
                     <div className="w-2/5 flex flex-col min-h-0">
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-                            <TabsList className="grid w-[50%] grid-cols-2 mx-6 mt-6 mb-0 flex-shrink-0" >
+                            {/* <TabsList className="grid w-[50%] grid-cols-2 mx-6 mt-6 mb-0 flex-shrink-0" > */}
+                            <TabsList className="grid w-[40%] grid-cols-1 mx-6 mt-6 mb-0 flex-shrink-0" >
                                 <TabsTrigger value="parameters" className="flex items-center gap-2" >
                                     <Settings className="w-4 h-4" />
                                     Parameters
                                 </TabsTrigger>
-                                <TabsTrigger value="settings" disabled>Settings</TabsTrigger>
+                                {/* <TabsTrigger value="settings" disabled>Settings</TabsTrigger> */}
                             </TabsList>
 
                             <div className="flex-1 overflow-hidden min-h-0">

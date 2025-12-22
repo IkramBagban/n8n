@@ -240,13 +240,32 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         }
 
         const nodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        
+        const parameters: Record<string, unknown> = {};
+        
+        // Initialize default parameters based on node properties
+        if (nodeItem.properties) {
+            Object.values(nodeItem.properties).forEach((prop: any) => {
+                if (prop.default !== undefined) {
+                    parameters[prop.name] = prop.default;
+                }
+            });
+        }
+
+        // Special handling for webhook node path
+        if (nodeItem.name === 'webhook') {
+            const origin = typeof window !== 'undefined' ? window.location.origin : '';
+            const uuid = crypto.randomUUID();
+            parameters['path'] = `${origin}/api/rest/workflows/webhook/${uuid}`;
+        }
+
         const newNode = {
             id: nodeId,
             position: { x: Math.random() * 20, y: Math.random() * 5 },
             name: nodeItem.name,
             description: nodeItem.description,
             type: nodeType,
-            parameters: {},
+            parameters: parameters,
             data: {
                 label: nodeItem.displayName || nodeItem.name,
                 nodeType: nodeItem.id,

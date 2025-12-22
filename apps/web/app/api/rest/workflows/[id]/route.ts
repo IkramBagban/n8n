@@ -50,6 +50,7 @@ export const PATCH = async (
     const body = await req.json();
     const { name, nodes, edges, active, tags, projectId } = body;
     const { id: workflowId } = await params;
+    console.log("nodes", nodes);
 
     const schemaResult = createWorkflowSchema.safeParse(body);
     if (!schemaResult.success) {
@@ -71,6 +72,10 @@ export const PATCH = async (
         });
 
         await tx.node.deleteMany({
+          where: { workflowId },
+        });
+
+        await tx.webhook.deleteMany({
           where: { workflowId },
         });
 
@@ -114,6 +119,48 @@ export const PATCH = async (
             })
           )
         );
+
+        console.log("nodes",JSON.stringify(nodes, null, 2))
+        const webhookNodes = nodes.filter((node: any) => node.name === "webhook");
+        if (webhookNodes.length > 0) {
+          const webhookData = webhookNodes.map((node: any) => {
+            // If path is not in parameters, it might be using the default value from the node definition
+            // But since we can't easily access the node definition defaults here without importing them,
+            // and the frontend should ideally send the full state.
+            // However, if it's missing, we should handle it gracefully or skip.
+            // For now, let's check if path exists, if not, we can't register the webhook properly.
+            
+            const path = node.parameters?.path as string;
+            
+            if (!path) {
+               // If no path is provided, we can't extract the ID. 
+               // This might happen if the user hasn't configured the node yet or if it's using a default that wasn't saved to parameters.
+               // We'll skip this one or log a warning.
+               console.warn(`Webhook node ${node.id} has no path parameter. Skipping registration.`);
+               return null;
+            }
+
+            const parts = path.split('/');
+            const webhookId = parts[parts.length - 1];
+            
+            if (!webhookId) {
+                console.warn(`Could not extract webhookId from path: ${path}`);
+                return null;
+            }
+
+            return {
+              webhookId,
+              workflowId
+            };
+          }).filter((item: any) => item !== null); // Filter out nulls
+
+          if (webhookData.length > 0) {
+            await tx.webhook.createMany({
+                data: webhookData,
+                skipDuplicates: true
+            });
+          }
+        }
 
         return {
           ...updatedWorkflow,

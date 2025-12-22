@@ -46,7 +46,7 @@ export class Engine {
   }
 
   async run() {
-    console.log("executing workflow");
+    console.log("executing workflow", this.nodes);
     await updateExecutionStatus(this.executionId!, "Running");
 
     const triggerNode = this.nodes.find((node) => node.type === "trigger");
@@ -184,6 +184,21 @@ export class Engine {
 
         break;
 
+      case "webhook":
+        const webhook = predefinedNodesTypes["nodes-base.webhook"];
+        await publishDataToPubSub({
+          ...commonPayload,
+          status: "Running",
+          nodeStatus: NodeStatus.success,
+        });
+
+        this.nodeOutput.addOutput({
+          nodeId: currentNode.id,
+          nodeName: currentNode.name,
+          json: currentNode.parameters,
+        });
+
+        break;
       case "agent":
         const agent = predefinedNodesTypes["nodes-base.agent"];
 

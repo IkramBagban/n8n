@@ -17,7 +17,7 @@ export const GET = async () => {
       credentials: nodeType.description.credentials,
     };
   }).filter(node => {
-    return !node.group?.includes('trigger') && node.name !== 'manualTrigger' && node.name !== 'webhookTrigger';
+    return !node.group?.includes('trigger') && node.name !== 'manualTrigger';
   });
 
   return NextResponse.json(availableNodes);
