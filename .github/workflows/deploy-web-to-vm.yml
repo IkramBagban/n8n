@@ -1,4 +1,4 @@
-name: Deploy Web
+name: Deploy Web To VM
 on:
   push:
     branches:
