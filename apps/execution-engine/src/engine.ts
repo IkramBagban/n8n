@@ -13,6 +13,11 @@ const publishDataToPubSub = async (payload: Record<string, any>) => {
     const message = JSON.stringify({ ...payload });
 
     await publisher.publish(channel, message);
+
+    if (payload.workflowId) {
+      const workflowChannel = `workflow-${payload.workflowId}`;
+      await publisher.publish(workflowChannel, message);
+    }
   } catch (error) {
     console.error("Error publishing to Redis:", error);
     // Don't throw - continue execution even if pub/sub fails
@@ -55,6 +60,7 @@ export class Engine {
       await updateExecutionStatus(this.executionId!, "Error", true);
       await publishDataToPubSub({
         executionId: this.executionId,
+        workflowId: this.workflowId,
         status: "Failed",
         message: "There is no trigger node",
       });
@@ -69,6 +75,7 @@ export class Engine {
       await updateExecutionStatus(this.executionId!, "Success", true);
       await publishDataToPubSub({
         executionId: this.executionId,
+        workflowId: this.workflowId,
         json: this.nodeOutput.json,
         status: "Success",
         message: "Workflow execution finished",

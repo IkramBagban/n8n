@@ -122,7 +122,7 @@ export class LmChatGoogleGemini implements INodeType {
   // Fallback execute method in case model node gets executed directly
   async execute(parameters: any, credentialId?: string) {
     console.warn(
-      "Model node executed directly - models should be connected to agent's sub-component handles"
+      "Model node executed directly models should be connected to agent's sub-component handles"
     );
 
     return {

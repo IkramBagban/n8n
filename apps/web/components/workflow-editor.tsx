@@ -28,6 +28,7 @@ import {
 import Link from 'next/link';
 import { useWorkflowEditor } from '@/hooks/useWorkflowEditor';
 import { WorkflowSidebar, type NodeItem } from '@/components/workflow-sidebar';
+import axios from 'axios';
 import { NodeConfigModal } from '@/components/node-config-modal';
 import { ExecutionOutputPanel } from '@/components/execution-output-panel';
 import { nodeTypes } from '@/utils/nodes-types';
@@ -301,127 +302,149 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         }
     };
 
-    const handleExecuteWorkflow = async () => {
+    // Listen for workflow events (SSE)
+    useEffect(() => {
+        if (!workflowId) return;
 
+        console.log(`Connecting to workflow stream: /api/rest/workflows/${workflowId}/stream`);
+        const eventSource = new EventSource(`/api/rest/workflows/${workflowId}/stream`);
+
+        eventSource.onopen = () => {
+            console.log("Connected to workflow stream");
+        };
+
+        eventSource.onmessage = (event) => {
+            try {
+                const parsedData: ExecutionMessage = JSON.parse(event.data);
+
+                // If a new execution starts, reset the state
+                if (parsedData.status === "Starting") {
+                    setNodeExecutionStates({});
+                    setExecutionLogs([]);
+                    setIsExecuting(true);
+                    toast.loading('Workflow execution started...', {
+                        id: 'workflow-execution',
+                        duration: 2000,
+                    });
+                    return;
+                }
+
+                // Add to execution logs
+                setExecutionLogs((currentLogs) => [...currentLogs, parsedData]);
+
+                // Update node execution states
+                if (parsedData.nodeId) {
+                    setNodeExecutionStates((prevStates) => ({
+                        ...prevStates,
+                        [parsedData.nodeId!]: {
+                            status: parsedData.nodeStatus === 'executing' ? 'executing' :
+                                parsedData.nodeStatus === 'success' ? 'success' :
+                                    parsedData.nodeStatus === 'failed' ? 'failed' : 'idle',
+                            message: parsedData.message,
+                            response: parsedData.response,
+                        }
+                    }));
+
+                    // Show toast for node failures
+                    if (parsedData.nodeStatus === 'failed') {
+                        let errorMessage = 'Unknown error';
+
+                        // Extract error message from various possible locations
+                        if (parsedData.message) {
+                            errorMessage = parsedData.message;
+                        } else if (parsedData.response?.error) {
+                            errorMessage = typeof parsedData.response.error === 'string'
+                                ? parsedData.response.error
+                                : JSON.stringify(parsedData.response.error);
+                        } else if (parsedData.response?.message) {
+                            errorMessage = parsedData.response.message;
+                        }
+
+                        toast.error(
+                            `Node "${parsedData.nodeName || parsedData.nodeId}" failed:\n${errorMessage}`,
+                            {
+                                duration: 8000,
+                                style: {
+                                    maxWidth: '500px',
+                                    whiteSpace: 'pre-line',
+                                },
+                            }
+                        );
+                    }
+                }
+
+                // Check if workflow execution finished
+                if (parsedData.status === "Success") {
+                    console.log("Workflow execution completed successfully", executionLogs);
+                    setIsExecuting(false);
+                    workflowCtx.setJsonOutput(parsedData.json);
+                    setExecutionOutput(parsedData.json);
+
+                    toast.success('Workflow executed successfully!', {
+                        id: 'workflow-execution',
+                        duration: 4000,
+                    });
+                } else if (parsedData.status === "Failed") {
+                    console.log("Workflow execution failed", executionLogs);
+                    setIsExecuting(false);
+                    workflowCtx.setJsonOutput(parsedData.json);
+
+                    // Only show workflow failure toast if we didn't just show a node failure toast
+                    if (parsedData.nodeStatus !== 'failed') {
+                        let errorMessage = 'Unknown error occurred';
+                        if (parsedData.message) {
+                            errorMessage = parsedData.message;
+                        } else if (parsedData.response?.error) {
+                            errorMessage = typeof parsedData.response.error === 'string'
+                                ? parsedData.response.error
+                                : JSON.stringify(parsedData.response.error);
+                        }
+
+                        toast.error(
+                            `Workflow execution failed:\n${errorMessage}`,
+                            {
+                                id: 'workflow-execution',
+                                duration: 8000,
+                                style: {
+                                    maxWidth: '500px',
+                                    whiteSpace: 'pre-line',
+                                },
+                            }
+                        );
+                    }
+                } else if (parsedData.status === "Error") {
+                     setIsExecuting(false);
+                     toast.error('Workflow execution error', { id: 'workflow-execution' });
+                }
+
+            } catch (e) {
+                console.error("Error parsing event data", e);
+            }
+        };
+
+        eventSource.onerror = (error) => {
+            console.error("SSE Error:", error);
+            eventSource.close();
+        };
+
+        return () => {
+            eventSource.close();
+        };
+    }, [workflowId]);
+
+    const handleExecuteWorkflow = async () => {
         setNodeExecutionStates({});
         setExecutionLogs([]);
         setIsExecuting(true);
 
-        toast.loading('Starting workflow execution...', {
-            id: 'workflow-execution',
-            duration: 2000,
-        });
-
-        const eventSource = new EventSource("/api/rest/workflows/execute?workflowId=" + workflowId);
-
-        eventSource.onopen = (event) => {
-            console.log("Connection opened:", event);
-            toast.success('Workflow execution started', {
-                id: 'workflow-execution',
-            });
-        }
-
-        eventSource.onmessage = (event) => {
-            const parsedData: ExecutionMessage = JSON.parse(event.data);
-
-            // Add to execution logs
-            setExecutionLogs((currentLogs) => [...currentLogs, parsedData]);
-
-            // Update node execution states
-            if (parsedData.nodeId) {
-                setNodeExecutionStates((prevStates) => ({
-                    ...prevStates,
-                    [parsedData.nodeId!]: {
-                        status: parsedData.nodeStatus === 'executing' ? 'executing' :
-                            parsedData.nodeStatus === 'success' ? 'success' :
-                                parsedData.nodeStatus === 'failed' ? 'failed' : 'idle',
-                        message: parsedData.message,
-                        response: parsedData.response,
-                    }
-                }));
-
-                // Show toast for node failures
-                if (parsedData.nodeStatus === 'failed') {
-                    let errorMessage = 'Unknown error';
-
-                    // Extract error message from various possible locations
-                    if (parsedData.message) {
-                        errorMessage = parsedData.message;
-                    } else if (parsedData.response?.error) {
-                        errorMessage = typeof parsedData.response.error === 'string'
-                            ? parsedData.response.error
-                            : JSON.stringify(parsedData.response.error);
-                    } else if (parsedData.response?.message) {
-                        errorMessage = parsedData.response.message;
-                    }
-
-                    toast.error(
-                        `Node "${parsedData.nodeName || parsedData.nodeId}" failed:\n${errorMessage}`,
-                        {
-                            duration: 8000,
-                            style: {
-                                maxWidth: '500px',
-                                whiteSpace: 'pre-line',
-                            },
-                        }
-                    );
-                }
-            }
-
-            // Check if workflow execution finished
-            if (parsedData.status === "Success") {
-                console.log("Workflow execution completed successfully", executionLogs);
-                setIsExecuting(false);
-                eventSource.close();
-                workflowCtx.setJsonOutput(parsedData.json);
-
-                setExecutionOutput(parsedData.json);
-                // setIsOutputPanelOpen(true);
-
-                toast.success('Workflow executed successfully!', {
-                    duration: 4000,
-                });
-            } else if (parsedData.status === "Failed") {
-                console.log("Workflow execution failed", executionLogs);
-
-                setIsExecuting(false);
-                eventSource.close();
-                workflowCtx.setJsonOutput(parsedData.json);
-
-                // Only show workflow failure toast if we didn't just show a node failure toast
-                if (parsedData.nodeStatus !== 'failed') {
-                    let errorMessage = 'Unknown error occurred';
-                    if (parsedData.message) {
-                        errorMessage = parsedData.message;
-                    } else if (parsedData.response?.error) {
-                        errorMessage = typeof parsedData.response.error === 'string'
-                            ? parsedData.response.error
-                            : JSON.stringify(parsedData.response.error);
-                    }
-
-                    toast.error(
-                        `Workflow execution failed:\n${errorMessage}`,
-                        {
-                            duration: 8000,
-                            style: {
-                                maxWidth: '500px',
-                                whiteSpace: 'pre-line',
-                            },
-                        }
-                    );
-                }
-            }
-        }
-
-        eventSource.onerror = (error) => {
-            console.error("Error occurred:", error);
+        try {
+            await axios.get(`/api/rest/workflows/execute?workflowId=${workflowId}`);
+        } catch (error) {
+            console.error("Error starting execution:", error);
+            toast.error("Failed to start execution");
             setIsExecuting(false);
-            eventSource.close();
-            toast.error('Workflow execution failed due to connection error', {
-                duration: 5000,
-            });
         }
-    }
+    };
 
     const handleToggleActive = () => {
         if (workflowData) {

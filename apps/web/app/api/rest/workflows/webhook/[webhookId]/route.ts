@@ -55,6 +55,15 @@ export const GET = async (
   // Subscribe FIRST before pushing to queue
   const channel = `execution-${executionId}`;
   console.log(`Subscribing to channel: ${channel}`);
+
+  // Publish to workflow channel so frontend can pick it up
+  await redisClient.publish(`workflow-${workflowId}`, JSON.stringify({
+    executionId,
+    workflowId,
+    status: "Starting",
+    message: "Workflow execution started via webhook"
+  }));
+
   await redisClient.lPush(
     "execute-workflow",
     JSON.stringify({

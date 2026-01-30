@@ -1,6 +1,39 @@
-node_modules
 
-secret.yml
+
+
+
+secre
+**/node_modules
+
+# Build output
+**/.next
+**/dist
+**/out
+
+# Turbo / cache
+.turbo
+.cache
+
+# Env
+.env*
+
+# Git
+.git
+.gitignore
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+**/.prisma
+
+# Tests
+**/__tests__
+ml
 secret.yaml
 
 .env
