@@ -1,5 +1,6 @@
 name: Deploy Web To VM
 on:
+  workflow_dispatch: 
   push:
     branches:
       - main
