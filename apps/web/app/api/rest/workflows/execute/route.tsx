@@ -53,7 +53,7 @@ export const GET = async (req: NextRequest) => {
                     const executionResponse = await prismaClient.$transaction(async (tx) => {
                         const workflow = await tx.workflow.findUnique({
                             where: { id: workflowId },
-                            include: { Node: true, Edge: true },
+                                include: { Node: true, Edge: true },
                         })
 
 

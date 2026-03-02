@@ -32,22 +32,18 @@ interface NodeItem {
 
 interface WorkflowSidebarProps {
     isOpen: boolean;
-    mode: 'triggers' | 'actions';
     searchQuery: string;
     onClose: () => void;
     onSearchChange: (query: string) => void;
     onNodeSelect: (node: NodeItem) => void;
-    onModeChange: (mode: 'triggers' | 'actions') => void;
 }
 
 export function WorkflowSidebar({
     isOpen,
-    mode,
     searchQuery,
     onClose,
     onSearchChange,
     onNodeSelect,
-    onModeChange,
 }: WorkflowSidebarProps) {
 
 
@@ -87,6 +83,8 @@ export function WorkflowSidebar({
         node.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const allFilteredNodes = [...filteredTriggers, ...filteredActions];
+
 
 
     if (!isOpen) {
@@ -103,7 +101,7 @@ export function WorkflowSidebar({
             <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-xl z-50 flex flex-col">
                 <div className="flex items-center justify-between p-4 border-b border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-900">
-                        {mode === 'triggers' ? 'What triggers this workflow?' : 'What happens next?'}
+                        Add a node
                     </h2>
                     <button
                         onClick={onClose}
@@ -129,58 +127,37 @@ export function WorkflowSidebar({
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-4 space-y-3">
                         <p className="text-sm text-gray-600 mb-4">
-                            {mode === 'triggers'
-                                ? 'A trigger is a step that starts your workflow'
-                                : 'Actions are the steps that happen after your workflow starts'
-                            }
+                            Choose from triggers and actions
                         </p>
-                        {mode === 'triggers' ? (
-                            <>
-                                {filteredTriggers?.map((trigger) => (
-                                    <div
-                                        key={Date.now() + Math.random()}
-                                        className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 cursor-pointer transition-colors"
-                                        onClick={() => onNodeSelect(trigger)}
-                                    >
-                                        <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                            <NodeIcon 
-                                                icon={trigger.icon || { type: 'lucide' as const, value: 'Zap', color: 'yellow' }} 
-                                                size="sm" 
-                                                className="text-current" 
-                                            />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-medium text-gray-900 text-sm">{trigger.displayName || trigger.name}</h3>
-                                            <p className="text-xs text-gray-600 mt-1">{trigger.description}</p>
-                                        </div>
-                                        <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        {allFilteredNodes.map((node) => {
+                            const isTrigger = node.group?.includes('trigger') || node.category === 'triggers';
+
+                            return (
+                                <div
+                                    key={node.id}
+                                    className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 cursor-pointer transition-colors"
+                                    onClick={() => onNodeSelect(node)}
+                                >
+                                    <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <NodeIcon
+                                            icon={node.icon || { type: 'lucide' as const, value: 'Zap', color: isTrigger ? 'yellow' : 'blue' }}
+                                            size="sm"
+                                            className="text-current"
+                                        />
                                     </div>
-                                ))}
-                            </>
-                        ) : (
-                            <>
-                                {filteredActions?.map((action) => (
-                                    <div
-                                        key={Date.now() + Math.random()}
-                                        className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50 cursor-pointer transition-colors"
-                                        onClick={() => onNodeSelect(action)}
-                                    >
-                                        <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                            <NodeIcon 
-                                                icon={action.icon || { type: 'lucide' as const, value: 'Zap', color: 'blue' }} 
-                                                size="sm" 
-                                                className="text-current" 
-                                            />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="font-medium text-gray-900 text-sm">{node.displayName || node.name}</h3>
+                                            <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                {isTrigger ? 'Trigger' : 'Action'}
+                                            </span>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-medium text-gray-900 text-sm">{action.displayName || action.name}</h3>
-                                            <p className="text-xs text-gray-600 mt-1">{action.description}</p>
-                                        </div>
-                                        <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                        <p className="text-xs text-gray-600 mt-1">{node.description}</p>
                                     </div>
-                                ))}
-                            </>
-                        )}
+                                    <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                </div>
+                            );
+                        })}
 
                         {/* <div className="mt-6 pt-4 border-t border-gray-200">
                             <div

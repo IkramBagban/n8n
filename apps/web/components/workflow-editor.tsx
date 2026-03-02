@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Background, Controls, MiniMap, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Switch } from '@/components/ui/switch';
+import type { Edge } from '@xyflow/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -43,8 +43,8 @@ interface ExecutionMessage {
     status: string;
     message?: string;
     nodeStatus?: 'executing' | 'success' | 'failed';
-    response?: any;
-    json?: Record<string, any>
+    response?: Record<string, unknown>;
+    json?: Record<string, unknown>
 }
 
 interface NodeExecutionState {
@@ -60,6 +60,56 @@ interface WorkflowEditorProps {
     projectId?: string;
     isNewWorkflow?: boolean;
 }
+
+interface NodePropertyWithDefault {
+    name: string;
+    default?: unknown;
+}
+
+interface WorkflowSnapshot {
+    name: string;
+    active: boolean;
+    tags: string[];
+    projectId?: string;
+    nodes: unknown[];
+    edges: unknown[];
+}
+
+const normalizeNodeForSnapshot = (node: Node): unknown => {
+    const normalizedNode = { ...node } as Record<string, unknown>;
+    delete normalizedNode.selected;
+    delete normalizedNode.dragging;
+    delete normalizedNode.measured;
+    delete normalizedNode.searchNode;
+    delete normalizedNode.positionAbsolute;
+
+    return normalizedNode;
+};
+
+const normalizeEdgeForSnapshot = (edge: Edge): unknown => {
+    const normalizedEdge = { ...edge } as Record<string, unknown>;
+    delete normalizedEdge.selected;
+
+    return normalizedEdge;
+};
+
+const createSnapshotString = (
+    nodes: Node[],
+    edges: Edge[],
+    workflowData: { name?: string; active?: boolean; tags?: string[]; projectId?: string } | null,
+    fallbackProjectId?: string
+): string => {
+    const snapshot: WorkflowSnapshot = {
+        name: workflowData?.name || 'New Workflow',
+        active: workflowData?.active || false,
+        tags: workflowData?.tags || [],
+        projectId: workflowData?.projectId || fallbackProjectId,
+        nodes: nodes.map(normalizeNodeForSnapshot),
+        edges: edges.map(normalizeEdgeForSnapshot),
+    };
+
+    return JSON.stringify(snapshot);
+};
 
 export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }: WorkflowEditorProps) {
     const {
@@ -77,7 +127,6 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
     const [isSaving, setIsSaving] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [sidebarMode, setSidebarMode] = useState<'triggers' | 'actions'>('triggers');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedNode, setSelectedNode] = useState<Node | null>(null);
     const [isNodeModalOpen, setIsNodeModalOpen] = useState(false);
@@ -88,6 +137,8 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     const [tempWorkflowName, setTempWorkflowName] = useState('');
     const [isOutputPanelOpen, setIsOutputPanelOpen] = useState(false);
     const [executionOutput, setExecutionOutput] = useState<unknown>(null);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const savedSnapshotRef = useRef<string | null>(null);
 
     // Reset workflow name editing state when workflowData changes
     useEffect(() => {
@@ -96,6 +147,33 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     }, [workflowData?.id]);
 
     const workflowCtx = useWorkflowCtx()
+
+    const currentSnapshot = useMemo(
+        () => createSnapshotString(nodes, edges, workflowData, projectId),
+        [nodes, edges, workflowData, projectId]
+    );
+
+    useEffect(() => {
+        savedSnapshotRef.current = null;
+        setHasUnsavedChanges(false);
+    }, [workflowData?.id]);
+
+    useEffect(() => {
+        if (isLoading || !workflowData) return;
+
+        if (!savedSnapshotRef.current) {
+            if (!workflowData.id && (nodes.length > 0 || edges.length > 0)) {
+                setHasUnsavedChanges(true);
+                return;
+            }
+
+            savedSnapshotRef.current = currentSnapshot;
+            setHasUnsavedChanges(false);
+            return;
+        }
+
+        setHasUnsavedChanges(savedSnapshotRef.current !== currentSnapshot);
+    }, [isLoading, workflowData, currentSnapshot, nodes.length, edges.length]);
 
     // Compute nodes with execution status
     const nodesWithExecutionStatus = useMemo(() => {
@@ -218,18 +296,13 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
     };
 
     const handleAddNode = () => {
-        if (nodes.length === 0) {
-            setSidebarMode('triggers');
-        } else {
-            setSidebarMode('actions');
-        }
         setIsSidebarOpen(true);
     };
 
     const handleNodeSelect = (nodeItem: NodeItem) => {
         // Determine node type based on group or category
         let nodeType: string;
-        if (nodeItem.group?.includes('trigger') || nodeItem.category === 'triggers' || sidebarMode === 'triggers') {
+        if (nodeItem.group?.includes('trigger') || nodeItem.category === 'triggers') {
             nodeType = 'trigger';
         } else if (nodeItem.group?.includes('ai') || nodeItem.name === 'agent') {
             nodeType = 'agent';
@@ -245,9 +318,10 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         
         // Initialize default parameters based on node properties
         if (nodeItem.properties) {
-            Object.values(nodeItem.properties).forEach((prop: any) => {
-                if (prop.default !== undefined) {
-                    parameters[prop.name] = prop.default;
+            Object.values(nodeItem.properties).forEach((prop) => {
+                const typedProp = prop as NodePropertyWithDefault;
+                if (typedProp.default !== undefined) {
+                    parameters[typedProp.name] = typedProp.default;
                 }
             });
         }
@@ -284,18 +358,14 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
 
     const handleSave = async () => {
         setIsSaving(true);
-        const toastId = toast.loading('Saving workflow...');
 
         try {
             await saveWorkflow();
-            toast.success('Workflow saved successfully!', {
-                id: toastId,
-            });
+            savedSnapshotRef.current = currentSnapshot;
+            setHasUnsavedChanges(false);
         } catch (error) {
             console.error("Error saving workflow:", error);
-            toast.error('Error saving workflow. Please try again.', {
-                id: toastId,
-            });
+            toast.error('Error saving workflow. Please try again.');
         } finally {
             setIsSaving(false);
         }
@@ -343,16 +413,18 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 // Show toast for node failures
                 if (parsedData.nodeStatus === 'failed') {
                     let errorMessage = 'Unknown error';
+                    const responseError = parsedData.response?.['error'];
+                    const responseMessage = parsedData.response?.['message'];
 
                     // Extract error message from various possible locations
                     if (parsedData.message) {
                         errorMessage = parsedData.message;
-                    } else if (parsedData.response?.error) {
-                        errorMessage = typeof parsedData.response.error === 'string'
-                            ? parsedData.response.error
-                            : JSON.stringify(parsedData.response.error);
-                    } else if (parsedData.response?.message) {
-                        errorMessage = parsedData.response.message;
+                    } else if (responseError !== undefined) {
+                        errorMessage = typeof responseError === 'string'
+                            ? responseError
+                            : JSON.stringify(responseError);
+                    } else if (typeof responseMessage === 'string') {
+                        errorMessage = responseMessage;
                     }
 
                     toast.error(
@@ -391,12 +463,13 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                 // Only show workflow failure toast if we didn't just show a node failure toast
                 if (parsedData.nodeStatus !== 'failed') {
                     let errorMessage = 'Unknown error occurred';
+                    const responseError = parsedData.response?.['error'];
                     if (parsedData.message) {
                         errorMessage = parsedData.message;
-                    } else if (parsedData.response?.error) {
-                        errorMessage = typeof parsedData.response.error === 'string'
-                            ? parsedData.response.error
-                            : JSON.stringify(parsedData.response.error);
+                    } else if (responseError !== undefined) {
+                        errorMessage = typeof responseError === 'string'
+                            ? responseError
+                            : JSON.stringify(responseError);
                     }
 
                     toast.error(
@@ -423,12 +496,6 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         }
     }
 
-    const handleToggleActive = () => {
-        if (workflowData) {
-            updateWorkflowData({ active: !workflowData.active });
-        }
-    };
-
     const handleStartEditingWorkflowName = () => {
         if (workflowData?.name) {
             setTempWorkflowName(workflowData.name);
@@ -436,17 +503,11 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
         }
     };
 
-    const handleSaveWorkflowName = async () => {
+    const handleSaveWorkflowName = () => {
         if (!tempWorkflowName.trim() || !workflowData) return;
 
-        try {
-            await updateWorkflowData({ name: tempWorkflowName.trim() });
-            setIsEditingWorkflowName(false);
-            toast.success('Workflow name updated successfully');
-        } catch (error) {
-            console.error('Error updating workflow name:', error);
-            toast.error('Failed to update workflow name');
-        }
+        updateWorkflowData({ name: tempWorkflowName.trim() });
+        setIsEditingWorkflowName(false);
     };
 
     const handleCancelEditingWorkflowName = () => {
@@ -610,7 +671,9 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                             </Button> */}
                             <Button
                                 size="sm"
-                                className="bg-red-500 hover:bg-red-600 text-white"
+                                className={hasUnsavedChanges
+                                    ? 'bg-red-500 hover:bg-red-600 text-white'
+                                    : 'bg-gray-200 hover:bg-gray-200 text-gray-500'}
                                 onClick={handleSave}
                                 disabled={isSaving}
                             >
@@ -670,19 +733,17 @@ export function WorkflowEditor({ workflowId, projectId, isNewWorkflow = false }:
                         >
                             {isExecuting ? 'Executing...' : 'Execute Workflow'}
                         </Button>
-                        <p className="text-xs text-gray-500 whitespace-nowrap bg-black/50  p-1 rounded-md text-white">Save workflow before executing</p>
+                        <p className="text-xs whitespace-nowrap bg-black/50 p-1 rounded-md text-white">Save workflow before executing</p>
                     </div>
                 </div>
             </div>
 
             <WorkflowSidebar
                 isOpen={isSidebarOpen}
-                mode={sidebarMode}
                 searchQuery={searchQuery}
                 onClose={() => setIsSidebarOpen(false)}
                 onSearchChange={setSearchQuery}
                 onNodeSelect={handleNodeSelect}
-                onModeChange={setSidebarMode}
             />
 
             <NodeConfigModal
