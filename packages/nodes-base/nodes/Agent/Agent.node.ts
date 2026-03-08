@@ -49,8 +49,6 @@ export class Agent implements INodeType {
         prompt: prompt.trim(),
       });
 
-      console.log("agent response:", response);
-
       const agentResult = {
         prompt: prompt.trim(),
         timestamp: new Date().toISOString(),
@@ -64,8 +62,6 @@ export class Agent implements INodeType {
         data: agentResult,
       };
     } catch (error) {
-      console.error("Agent execution error:", error);
-
       return {
         success: false,
         error:

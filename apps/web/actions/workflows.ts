@@ -9,6 +9,7 @@ export const getWorkflows = async (): Promise<{
   data: Workflow[];
   count: number;
 }> => {
+try {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -29,8 +30,11 @@ export const getWorkflows = async (): Promise<{
     },
   });
 
-  // @ts-ignore
-  return { data: workflows, count: workflows.length };
+    return { data: workflows as unknown as Workflow[], count: workflows.length };
+  } catch (error) {
+    console.error("Error fetching workflows:", error);
+    return { data: [], count: 0 };
+  }
 };
 
 export const getWorkflowsOfProject = async (
@@ -53,6 +57,5 @@ export const getWorkflowsOfProject = async (
   if (!workflows) {
     return { data: [], count: 0 };
   }
-  // @ts-ignore
-  return { data: workflows, count: workflows.length };
+  return { data: workflows as unknown as Workflow[], count: workflows.length };
 };

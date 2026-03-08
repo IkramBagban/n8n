@@ -7,6 +7,25 @@ import { ExpressionResolver } from "./utils/expression-resolver";
 
 const publisher = await createRedisClient();
 
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+
+  return "Unknown error occurred";
+};
+
 const publishDataToPubSub = async (payload: Record<string, any>) => {
   try {
     const channel = `execution-${payload.executionId}`;
@@ -128,14 +147,7 @@ export class Engine {
     } catch (error: any) {
       console.error(`Error executing node ${currentNode.name}:`, error);
 
-      let errorMessage = "Unknown error occurred";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === "string") {
-        errorMessage = error;
-      } else if (error && error.message) {
-        errorMessage = error.message;
-      }
+      const errorMessage = getErrorMessage(error);
 
       await publishDataToPubSub({
         ...commonPayload,
@@ -144,7 +156,6 @@ export class Engine {
         json: this.nodeOutput.json,
         response: {
           error: errorMessage,
-          stack: error.stack || "No stack trace available",
         },
         nodeStatus: NodeStatus.failed,
       });

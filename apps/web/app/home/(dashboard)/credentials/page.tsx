@@ -1,10 +1,9 @@
-import { DashboardHeader } from "@/components/dashboard-header"
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Plus, Key, MoreHorizontal, Calendar } from "lucide-react"
+import { Search, Plus, Key, MoreHorizontal } from "lucide-react"
 import prismaClient from "@repo/db"
 import { authOptions } from "@/lib/auth"
 
@@ -115,7 +114,7 @@ export default async function CredentialsPage() {
     const session = await getServerSession(authOptions)
 
     if (!session?.user) {
-        redirect('/ signin')
+        redirect('/signin')
     }
 
     const credentials = await getAllUserCredentials()

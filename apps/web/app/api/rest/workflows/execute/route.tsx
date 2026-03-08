@@ -1,17 +1,28 @@
 import { redisClient, getSubscriber } from "@/lib/redis";
+import { authOptions } from "@/lib/auth";
 import prismaClient, { ExecutionStatus } from "@repo/db";
 import { NextRequest } from "next/server";
+import { getServerSession } from "next-auth";
 
 
 // previously i was thinking I'll run unsave workflows, but now i think i'll not do that atleast for now.
 export const GET = async (req: NextRequest) => {
     console.log('Received request to execute workflow');
     try {
+        const session = await getServerSession(authOptions);
+
+        if (!session?.user?.id) {
+            return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+        }
 
         const { searchParams } = new URL(req.url);
 
         const workflowId = searchParams.get("workflowId")
         console.log('workflowId', workflowId);
+
+        if (!workflowId) {
+            return new Response(JSON.stringify({ error: "workflowId is required" }), { status: 400 });
+        }
 
         const encoder = new TextEncoder();
         const stream = new ReadableStream({
@@ -43,18 +54,20 @@ export const GET = async (req: NextRequest) => {
                         }
                     };
 
-                    if (!workflowId) {
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: "workflowId is required" })}\n\n`))
-                        await cleanup();
-                        safeClose();
-                        return;
-                    }
-
                     const executionResponse = await prismaClient.$transaction(async (tx) => {
-                        const workflow = await tx.workflow.findUnique({
-                            where: { id: workflowId },
-                                include: { Node: true, Edge: true },
+                        const workflow = await tx.workflow.findFirst({
+                            where: {
+                                id: workflowId,
+                                project: {
+                                    userId: session.user.id,
+                                },
+                            },
+                            include: { Node: true, Edge: true },
                         })
+
+                        if (!workflow) {
+                            throw new Error("Workflow not found or access denied")
+                        }
 
 
                         const response = await tx.execution.create({
