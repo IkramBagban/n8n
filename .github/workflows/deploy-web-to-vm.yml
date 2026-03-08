@@ -1,17 +1,17 @@
 name: Deploy Web To VM
 on:
   workflow_dispatch: 
-  push:
-    branches:
-      - main
-    paths:
-      - "apps/web/**"
-      - "packages/nodes-base/**"
-      - "packages/db/**"
-      - "packages/eslint-config/**"
-      - "packages/typescript-config/**"
-      - ".github/workflows/deploy-web-to-vm.yml"
-      - "docker/Dockerfile.web"
+  # push:
+  #   branches:
+  #     - main
+    # paths:
+    #   - "apps/web/**"
+    #   - "packages/nodes-base/**"
+    #   - "packages/db/**"
+    #   - "packages/eslint-config/**"
+    #   - "packages/typescript-config/**"
+    #   - ".github/workflows/deploy-web-to-vm.yml"
+    #   - "docker/Dockerfile.web"
 
 jobs:
   deploy:
