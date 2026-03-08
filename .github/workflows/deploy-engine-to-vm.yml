@@ -1,4 +1,4 @@
-name: Engine-Deployment
+name: deploy-engine-to-vm
 
 on:
   workflow_dispatch: 
