@@ -1,5 +1,5 @@
 
-const renderKeyValue = (key: string, value: any) => {
+const renderKeyValue = (key: string, value: unknown) => {
     if (typeof value === "object" && value !== null) {
         return (
             <div
@@ -31,7 +31,7 @@ const renderKeyValue = (key: string, value: any) => {
     }
 };
 
-export function NodeJsonOutput({ output }: { output: any }) {
+export function NodeJsonOutput({ output }: { output: { json?: Record<string, unknown> } | null }) {
     const json = output?.json || null;
 
     return (

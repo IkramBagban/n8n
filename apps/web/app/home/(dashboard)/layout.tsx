@@ -1,6 +1,5 @@
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardTabs } from "@/components/dashboard-tabs"
-import { MetricsGrid } from "@/components/metrics-grid"
 
 const dashboardTabs = [
     {
@@ -17,40 +16,6 @@ const dashboardTabs = [
         value: "executions",
         label: "Executions",
         href: "/home/executions"
-    }
-]
-
-
-const metricsData = [
-    {
-        title: "Prod. executions",
-        value: 0,
-        subtitle: "Last 7 days",
-        variant: "default" as const
-    },
-    {
-        title: "Failed prod. executions",
-        value: 0,
-        subtitle: "Last 7 days",
-        variant: "default" as const
-    },
-    {
-        title: "Failure rate",
-        value: 0,
-        subtitle: "Last 7 days",
-        variant: "percentage" as const
-    },
-    {
-        title: "Time saved",
-        value: "—",
-        subtitle: "Last 7 days",
-        variant: "default" as const
-    },
-    {
-        title: "Run time (avg.)",
-        value: 0,
-        subtitle: "Last 7 days",
-        variant: "time" as const
     }
 ]
 

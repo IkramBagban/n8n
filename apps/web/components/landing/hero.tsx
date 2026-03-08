@@ -1,7 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Zap, Shield, BarChart } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 
 export function LandingHero() {
   return (
