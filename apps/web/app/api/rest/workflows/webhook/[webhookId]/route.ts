@@ -1,5 +1,5 @@
-import { redisClient } from "@/lib/redis";
-import prismaClient, { ExecutionStatus } from "@repo/db";
+import { getExecutionEngine } from "@/lib/execution/engines";
+import prismaClient from "@repo/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (
@@ -41,7 +41,7 @@ export const GET = async (
           nodes: workflow?.Node || [],
           edges: workflow?.Edge || [],
         },
-        status: ExecutionStatus.Starting,
+        status: "Starting",
       },
       select: {
         id: true,
@@ -52,16 +52,21 @@ export const GET = async (
   const executionId = executionResponse.id;
   console.log("ExecutingID", executionId);
 
-  // Subscribe FIRST before pushing to queue
-  const channel = `execution-${executionId}`;
-  console.log(`Subscribing to channel: ${channel}`);
-  await redisClient.lPush(
-    "execute-workflow",
-    JSON.stringify({
+  const executionEngine = getExecutionEngine();
+  try {
+    await executionEngine.execute({
       workflowId,
       executionId,
-    })
-  );
+    });
+  } catch (error) {
+    console.error("Failed to dispatch webhook execution:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to dispatch workflow execution",
+      },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json(
     {
