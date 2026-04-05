@@ -1,7 +1,7 @@
 import prismaClient from "@repo/db";
-import { Engine } from "./engine";
+import { executeWorkflow } from "./engine";
 import { redisClient } from "./lib/redis";
-import type { Edge, Node } from "./utils/types";
+import type { Edge, Node } from "@repo/execution-core";
 import { startCleanupJob } from "./utils/redis-cleanup";
 
 console.log("Hello via Bun!");
@@ -44,14 +44,12 @@ const main = async () => {
     }
     const executionData = execution.data || {};
 
-    const engine = new Engine(
+    await executeWorkflow({
       workflowId,
       executionId,
-      executionData.nodes,
-      executionData.edges
-    );
-
-    await engine.run();
+      nodes: executionData.nodes,
+      edges: executionData.edges,
+    });
 
     // console.log("parsedJob", parsedJob);
   }
