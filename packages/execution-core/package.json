@@ -1,0 +1,20 @@
+{
+  "name": "@repo/execution-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  },
+  "module": "src/index.ts",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@repo/db": "*",
+    "@repo/nodes-base": "*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "typescript": "5.9.2"
+  }
+}
