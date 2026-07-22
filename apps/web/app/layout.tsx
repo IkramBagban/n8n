@@ -15,7 +15,7 @@
   });
 
   export const metadata: Metadata = {
-    title: "n8n - Workflow Automation",
+    title: "Nodeflow - Workflow Automation",
     description: "Build powerful automation workflows",
   };
 

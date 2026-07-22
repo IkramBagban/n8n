@@ -50,9 +50,9 @@ export default function SignInPage() {
           <div className="flex justify-center">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">n8n</span>
+                <span className="text-white font-bold text-sm">NF</span>
               </div>
-              <span className="text-2xl font-bold text-gray-900">n8n</span>
+              <span className="text-2xl font-bold text-gray-900">Nodeflow</span>
             </div>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">

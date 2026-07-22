@@ -15,7 +15,7 @@ export function LandingCTA() {
             Ready to automate your future?
           </h2>
           <p className="text-lg text-white/80 max-w-2xl mx-auto mb-10">
-            Join thousands of developers and businesses who are saving time and scaling operations with n8n.
+            Join thousands of developers and businesses who are saving time and scaling operations with Nodeflow.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

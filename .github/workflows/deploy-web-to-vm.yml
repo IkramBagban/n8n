@@ -37,10 +37,10 @@ jobs:
           # Build Docker image with secret
           docker build \
             --secret id=envfile,src=.env.build \
-            -t ikrambagban/n8n-web:${{ github.sha }} \
+            -t ikrambagban/nodeflow-web:${{ github.sha }} \
             -f docker/Dockerfile.web \
             .
-          docker push ikrambagban/n8n-web:${{ github.sha }}
+          docker push ikrambagban/nodeflow-web:${{ github.sha }}
 
       - name: Deploy to VM
         uses: appleboy/ssh-action@master
@@ -49,18 +49,18 @@ jobs:
           username: ${{ secrets.VM_USERNAME }}
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
-            docker pull ikrambagban/n8n-web:${{ github.sha }}
-            docker network inspect n8n-network || docker network create n8n-network
-            docker stop n8n-web || true
-            docker rm n8n-web || true
+            docker pull ikrambagban/nodeflow-web:${{ github.sha }}
+            docker network inspect nodeflow-network || docker network create nodeflow-network
+            docker stop nodeflow-web || true
+            docker rm nodeflow-web || true
             docker run -d \
-              --name n8n-web \
+              --name nodeflow-web \
               --restart always \
-              --network n8n-network \
+              --network nodeflow-network \
               -p 4000:4000 \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               -e REDIS_URL="${{ secrets.REDIS_URL }}" \
               -e NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
               -e NODE_ENV="production" \
               -e PORT="4000" \
-              ikrambagban/n8n-web:${{ github.sha }}
+              ikrambagban/nodeflow-web:${{ github.sha }}

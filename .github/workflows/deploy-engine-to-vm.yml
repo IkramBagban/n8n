@@ -33,8 +33,8 @@ jobs:
           file: ./docker/Dockerfile.engine
           push: true
           tags: |
-            ikrambagban/n8n-engine:${{ github.sha }}
-            ikrambagban/n8n-engine:latest
+            ikrambagban/nodeflow-engine:${{ github.sha }}
+            ikrambagban/nodeflow-engine:latest
 
       - name: Deploy to VM
         uses: appleboy/ssh-action@master
@@ -43,15 +43,15 @@ jobs:
           username: ${{ secrets.VM_USERNAME }}
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
-            docker pull ikrambagban/n8n-engine:${{ github.sha }}
-            docker network inspect n8n-network || docker network create n8n-network
-            docker stop n8n-engine || true
-            docker rm n8n-engine || true
+            docker pull ikrambagban/nodeflow-engine:${{ github.sha }}
+            docker network inspect nodeflow-network || docker network create nodeflow-network
+            docker stop nodeflow-engine || true
+            docker rm nodeflow-engine || true
             docker run -d \
-              --name n8n-engine \
+              --name nodeflow-engine \
               --restart always \
-              --network n8n-network \
+              --network nodeflow-network \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               -e REDIS_URL="${{ secrets.REDIS_URL }}" \
               -e NODE_ENV="production" \
-              ikrambagban/n8n-engine:${{ github.sha }}
+              ikrambagban/nodeflow-engine:${{ github.sha }}
