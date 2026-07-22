@@ -9,9 +9,9 @@ export function LandingFooter() {
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--chart-1)]">
-                <span className="text-white font-bold text-lg">n8n</span>
+                <span className="text-white font-bold text-lg">NF</span>
               </div>
-              <span className="font-bold text-xl">n8n</span>
+              <span className="font-bold text-xl">Nodeflow</span>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               Automate your workflow without the chaos. Built for modern teams.
@@ -61,7 +61,7 @@ export function LandingFooter() {
         </div>
         
         <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} n8n Inc. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Nodeflow Inc. All rights reserved.</p>
           <div className="flex gap-8">
             <Link href="#" className="hover:text-foreground transition-colors">Privacy Policy</Link>
             <Link href="#" className="hover:text-foreground transition-colors">Terms of Service</Link>

@@ -27,10 +27,10 @@ jobs:
           # Build Docker image with secret
           docker build \
             --secret id=envfile,src=.env.build \
-            -t ikrambagban/n8n-web:${{ github.sha }} \
+            -t ikrambagban/nodeflow-web:${{ github.sha }} \
             -f docker/Dockerfile.web \
             .
-          docker push ikrambagban/n8n-web:${{ github.sha }}
+          docker push ikrambagban/nodeflow-web:${{ github.sha }}
 
       - name: Clone super-ops repo, update, and push
         env:
@@ -38,9 +38,9 @@ jobs:
         run: |
           git clone https://github.com/IkramBagban/super-ops.git
           cd super-ops
-          sed -i 's|image: ikrambagban/n8n-web:.*|image: ikrambagban/n8n-web:${{ github.sha }}|' n8n-web/deployment.yml
+          sed -i 's|image: ikrambagban/nodeflow-web:.*|image: ikrambagban/nodeflow-web:${{ github.sha }}|' nodeflow-web/deployment.yml
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add n8n-web/deployment.yml
-          git commit -m "Update n8n-web image to ${{ github.sha }}" || true
+          git add nodeflow-web/deployment.yml
+          git commit -m "Update nodeflow-web image to ${{ github.sha }}" || true
           git push https://${PAT}@github.com/IkramBagban/super-ops.git main

@@ -8,9 +8,9 @@ export function LandingNavbar() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--chart-1)]">
-            <span className="text-white font-bold text-lg">n8n</span>
+            <span className="text-white font-bold text-lg">NF</span>
           </div>
-          <span className="font-bold text-xl tracking-tight">n8n</span>
+          <span className="font-bold text-xl tracking-tight">Nodeflow</span>
         </div>
         
         <nav className="hidden md:flex items-center gap-8">

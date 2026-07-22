@@ -153,9 +153,9 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-gray-200 p-4">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-red-500 rounded flex items-center justify-center">
-            <span className="text-white text-xs font-bold">n8n</span>
+            <span className="text-white text-xs font-bold">NF</span>
           </div>
-          <span className="font-semibold text-gray-900">n8n</span>
+          <span className="font-semibold text-gray-900">Nodeflow</span>
         </div>
       </SidebarHeader>
 

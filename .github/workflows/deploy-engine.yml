@@ -26,7 +26,7 @@ jobs:
           context: .
           file: docker/Dockerfile.engine
           push: true
-          tags: ikrambagban/n8n-engine:${{ github.sha }}
+          tags: ikrambagban/nodeflow-engine:${{ github.sha }}
 
       - name: Clone super-ops repo, update, and push
         env:
@@ -34,9 +34,9 @@ jobs:
         run: |
           git clone https://github.com/IkramBagban/super-ops.git
           cd super-ops
-          sed -i 's|image: ikrambagban/n8n-engine:.*|image: ikrambagban/n8n-engine:${{ github.sha }}|' n8n-execution-engine/deployment.yml
+          sed -i 's|image: ikrambagban/nodeflow-engine:.*|image: ikrambagban/nodeflow-engine:${{ github.sha }}|' nodeflow-execution-engine/deployment.yml
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add n8n-execution-engine/deployment.yml
-          git commit -m "Update n8n-execution-engine image to ${{ github.sha }}" || true
+          git add nodeflow-execution-engine/deployment.yml
+          git commit -m "Update nodeflow-execution-engine image to ${{ github.sha }}" || true
           git push https://${PAT}@github.com/IkramBagban/super-ops.git main
